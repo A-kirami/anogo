@@ -3,8 +3,7 @@ import { ScrollText } from 'lucide-vue-next'
 import YAML from 'yaml'
 
 import { generateScript } from '~/script-generator'
-
-import type { SceneScript } from '~/script-generator/type'
+import { sceneScriptSchema } from '~/script-generator/schema'
 
 const state = useStateStore()
 
@@ -12,9 +11,13 @@ let openResult = $ref(false)
 
 function generateResult() {
   try {
-    const sceneScript = YAML.parse(state.editorCode) as SceneScript
+    const schemaScript = YAML.parse(state.editorCode)
+    const parseResult = sceneScriptSchema.safeParse(schemaScript)
+    if (!parseResult.success) {
+      throw parseResult.error
+    }
     try {
-      state.scriptCode = generateScript(sceneScript)
+      state.scriptCode = generateScript(parseResult.data)
       openResult = true
     } catch (error) {
       notify.error('生成脚本失败')
