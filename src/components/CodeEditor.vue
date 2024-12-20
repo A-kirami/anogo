@@ -5,37 +5,12 @@ import { githubLight, githubDark } from '@uiw/codemirror-theme-github'
 import { OverlayScrollbarsComponent } from 'overlayscrollbars-vue'
 import { Codemirror } from 'vue-codemirror'
 import YAML from 'yaml'
-import { z } from 'zod'
+
+import { sceneScriptSchema } from '~/script-generator/schema'
 
 import type { EditorView } from '@codemirror/view'
 
 const state = useStateStore()
-
-const emotionActionSchema = z.enum([
-  '生气', '告别', '哭泣', '感动', '决心', '悲伤', '认真', '害羞', '微笑', '惊讶', '思考',
-])
-
-const backgroundStatementSchema = z.object({
-  背景: z.string(),
-})
-
-const narrationStatementSchema = z.object({
-  旁白: z.string(),
-})
-
-const dialogueStatementSchema = z.object({
-  角色: z.string(),
-  动作: emotionActionSchema,
-  对话: z.string(),
-})
-
-const sceneStatementSchema = z.union([
-  backgroundStatementSchema,
-  narrationStatementSchema,
-  dialogueStatementSchema,
-])
-
-const sceneScriptSchema = z.array(sceneStatementSchema)
 
 const yamlLinter = linter((view: EditorView) => {
   const doc = YAML.parseDocument(view.state.doc.toString())
