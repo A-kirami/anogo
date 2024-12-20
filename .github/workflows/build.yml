@@ -1,0 +1,114 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - main
+  pull_request_target:
+    paths:
+      - 'src/**'
+      - 'src-tauri/**'
+      - 'package.json'
+      - 'vite.config.ts'
+      - 'unocss.config.ts'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            label: linux-amd64
+            target: x86_64-unknown-linux-gnu
+          - os: macos-latest
+            label: macos-amd64
+            target: x86_64-apple-darwin
+          - os: macos-latest
+            label: macos-arm64
+            target: aarch64-apple-darwin
+          - os: windows-latest
+            label: windows-amd64
+            target: x86_64-pc-windows-msvc
+    name: ${{ matrix.label }}
+    runs-on: ${{ matrix.os }}
+    env:
+      GITHUB_PR_NUMBER: ${{ github.event.pull_request.number }}
+      GITHUB_BUILD_SHA: ${{ github.event.pull_request && github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install dependencies (ubuntu only)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+
+      - name: Rust setup
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: ./src-tauri -> target
+
+      - name: Bun setup
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+
+      - name: Install app dependencies
+        run: bun install
+
+      - name: Build the app
+        id: tauri-build
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          args: -t ${{ matrix.target }} -c '{"bundle":{"createUpdaterArtifacts":false}}'
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: 'anogo_${{steps.tauri-build.outputs.appVersion}}_${{ matrix.label }}'
+          path: "${{ join(fromJSON(steps.tauri-build.outputs.artifactPaths), '\n') }}"
+
+  comment:
+    needs: build
+    permissions:
+      pull-requests: write
+    if: github.event.pull_request && github.event.sender.type != 'Bot'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Format artifact comment
+        id: format-artifact-comment
+        uses: actions/github-script@v7
+        with:
+          result-encoding: string
+          script: |
+            const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: context.runId
+            });
+            const createArtifactComment = (await import(`${{github.workspace}}/scripts/formatArtifactComment.js`)).default;
+            return createArtifactComment(artifacts.data.artifacts, '${{github.event.pull_request.head.sha}}');
+
+      - name: Add artifact comment
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          number: ${{ github.event.pull_request.number }}
+          header: artifacts
+          message: ${{ steps.format-artifact-comment.outputs.result }}

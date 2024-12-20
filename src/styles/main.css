@@ -1,0 +1,7 @@
+@import "./overlayscrollbars.css";
+@import "./notivue.css";
+
+html,
+body {
+  @apply m-0 select-none p-0 antialiased overflow-hidden;
+}
