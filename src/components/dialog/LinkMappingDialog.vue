@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Link2, ArrowRightLeft, X, Plus } from 'lucide-vue-next'
+import naturalCompare from 'natural-compare-lite'
 import { OverlayScrollbarsComponent } from 'overlayscrollbars-vue'
 
 let open = defineModel<boolean>('open')
@@ -7,14 +8,14 @@ let open = defineModel<boolean>('open')
 const state = useStateStore()
 
 const gameFigures = $computed(() => {
-  const result: Record<string, string> = {}
+  const result: { id: string, path: string }[] = []
   if (state.figureRecord) {
     for (const key of Object.keys(state.figureRecord)) {
       const figureData = state.figureRecord[key]
-      result[figureData.name] = figureData.path
+      result.push({ id: key, path: figureData.path })
     }
   }
-  return result
+  return result.sort((a, b) => naturalCompare(a.path, b.path))
 })
 
 const activeTab = $ref<'figure' | 'action'>('figure')
@@ -44,13 +45,13 @@ const activeTab = $ref<'figure' | 'action'>('figure')
         <TabsContent value="figure" class="flex overflow-hidden" :class="{'mt-0': activeTab !== 'figure'}">
           <OverlayScrollbarsComponent defer class="px-2 py-1">
             <div class="flex flex-col gap-2">
-              <div v-for="(path, id) in gameFigures" :key="id" class="space-y-2">
+              <div v-for="{id, path} in gameFigures" :key="id" class="space-y-2">
                 <div class="flex items-baseline gap-2 overflow-hidden">
                   <span class="text-lg text-primary/80 font-semibold">{{ id }}</span>
                   <span class="truncate text-sm text-muted-foreground">{{ path }}</span>
                 </div>
-                <TagsInput v-model="state.figureLink[id as string]">
-                  <TagsInputItem v-for="item in state.figureLink[id as string]" :key="item" :value="item">
+                <TagsInput v-model="state.figureLink[id]">
+                  <TagsInputItem v-for="item in state.figureLink[id]" :key="item" :value="item">
                     <TagsInputItemText />
                     <TagsInputItemDelete />
                   </TagsInputItem>
