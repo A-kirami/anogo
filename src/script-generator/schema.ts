@@ -23,3 +23,18 @@ const sceneStatementSchema = z.union([
 ])
 
 export const sceneScriptSchema = z.array(sceneStatementSchema)
+
+export function getStrictSchema(actions: readonly [string, ...string[]]) {
+  const strictActions = z.enum(actions)
+  const dialogueStatementStrictSchema = z.object({
+    角色: stringOrNumberToString,
+    动作: strictActions,
+    对话: stringOrNumberToString,
+  })
+  const sceneStatementStrictSchema = z.union([
+    backgroundStatementSchema,
+    narrationStatementSchema,
+    dialogueStatementStrictSchema,
+  ])
+  return z.array(sceneStatementStrictSchema)
+}
