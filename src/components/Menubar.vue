@@ -24,7 +24,7 @@ async function loadGame() {
   <div class="flex items-center justify-between gap-2">
     <div v-if="state.selectedGameInfo" class="flex gap-2 overflow-hidden">
       <div class="group flex cursor-pointer items-center gap-2 overflow-hidden" @click="openSelect = true">
-        <img :src="state.selectedGameInfo.icon || '/webgal.png'" alt="game icon" class="size-9 rounded">
+        <img :src="state.selectedGameInfo.icon || '/webgal.webp'" alt="game icon" class="size-9 rounded">
         <span class="truncate text-lg font-semibold transition-colors group-hover:text-primary/80">{{ state.selectedGame }}</span>
       </div>
       <LinkMappingDialog>
