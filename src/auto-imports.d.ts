@@ -297,7 +297,7 @@ declare global {
   export type { Component, ComponentPublicInstance, ComputedRef, DirectiveBinding, ExtractDefaultPropTypes, ExtractPropTypes, ExtractPublicPropTypes, InjectionKey, PropType, Ref, MaybeRef, MaybeRefOrGetter, VNode, WritableComputedRef } from 'vue'
   import('vue')
   // @ts-ignore
-  export type { GameInfo, GameRecord, FigureData, Costume, FigureRecord, FigureLink } from './types/index'
+  export type { GameInfo, GameRecord, FigureData, Costume, FigureRecord, FigureLink, ActionLink } from './types/index'
   import('./types/index')
   // @ts-ignore
   export type { isBuild, isRelease, prNum, buildSha } from './types/info-build-meta.d'

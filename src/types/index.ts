@@ -21,3 +21,5 @@ export interface Costume {
 export type FigureRecord = Record<string, FigureData>
 
 export type FigureLink = Record<string, string[]>
+
+export type ActionLink = { key: string, value: string }[]

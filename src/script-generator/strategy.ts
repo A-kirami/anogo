@@ -1,4 +1,4 @@
-import type { SceneStatement, BackgroundStatement, NarrationStatement, DialogueStatement, EmotionAction } from './type'
+import type { SceneStatement, BackgroundStatement, NarrationStatement, DialogueStatement } from './type'
 
 interface StrategyObject {
   keys: string[]
@@ -27,8 +27,9 @@ export const statementStrategy = [
           const defaultCostume = getDefaultCostume(state.figureRecord[figureID].costumes)
           const figureFile = defaultCostume.path
           const defaultTransform = getDefaultTransform()
-          const figureMotion = getFigureAction(defaultCostume.motions, ActionMapping[action])
-          const figureExpression = getFigureAction(defaultCostume.expressions, ActionMapping[action])
+          const figureAction = getAction(state.actionLink, action)
+          const figureMotion = getFigureAction(defaultCostume.motions, figureAction)
+          const figureExpression = getFigureAction(defaultCostume.expressions, figureAction)
           const argsMap = {
             id: figureID,
             transform: defaultTransform,
@@ -64,6 +65,13 @@ function getFigureID(figureLink: FigureLink, name: string): string | undefined {
   return undefined
 }
 
+const DEFAULT_ACTION = 'idle'
+
+function getAction(actionLink: ActionLink, key: string): string {
+  const item = actionLink.find(obj => obj.key === key)
+  return item ? item.value : DEFAULT_ACTION
+}
+
 function getDefaultCostume(costumes: Costume[]): Costume {
   for (const costume of costumes) {
     if (costume.name.includes('casual')) {
@@ -72,20 +80,6 @@ function getDefaultCostume(costumes: Costume[]): Costume {
   }
   return randomChoice(costumes)
 }
-
-const ActionMapping = {
-  生气: 'angry',
-  告别: 'bye',
-  哭泣: 'cry',
-  感动: 'kandou',
-  决心: 'kime',
-  悲伤: 'sad',
-  认真: 'serious',
-  害羞: 'shame',
-  微笑: 'smile',
-  惊讶: 'surprised',
-  思考: 'thinking',
-} as Record<EmotionAction, string>
 
 function getFigureAction(motions: string[], action: string): string {
   const filteredMotions = motions.filter(motion => motion.includes(action))

@@ -27,11 +27,11 @@ async function loadGame() {
         <img :src="state.selectedGameInfo.icon || '/webgal.png'" alt="game icon" class="size-9 rounded">
         <span class="truncate text-lg font-semibold transition-colors group-hover:text-primary/80">{{ state.selectedGame }}</span>
       </div>
-      <LinkFigureDialog>
+      <LinkMappingDialog>
         <Button variant="outline" size="icon" class="shrink-0">
           <Link class="h-4 w-4" />
         </Button>
-      </LinkFigureDialog>
+      </LinkMappingDialog>
     </div>
     <div v-else class="flex items-center gap-2 text-muted-foreground">
       <CircleSlash2 class="size-4" />未选择 WebGAL 目录
