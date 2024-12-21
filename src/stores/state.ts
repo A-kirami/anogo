@@ -15,6 +15,20 @@ const defaultFigureLink = {
   mana: ['纯田真奈', '真奈'],
 }
 
+const defaultActionLink = [
+  { key: '生气', value: 'angry' },
+  { key: '告别', value: 'bye' },
+  { key: '哭泣', value: 'cry' },
+  { key: '感动', value: 'kandou' },
+  { key: '决心', value: 'kime' },
+  { key: '悲伤', value: 'sad' },
+  { key: '认真', value: 'serious' },
+  { key: '害羞', value: 'shame' },
+  { key: '微笑', value: 'smile' },
+  { key: '惊讶', value: 'surprised' },
+  { key: '思考', value: 'thinking' },
+]
+
 export const useStateStore = defineStore('state', () => {
   const editorCode = $ref<string>('')
   const scriptCode = $ref<string>('')
@@ -24,6 +38,7 @@ export const useStateStore = defineStore('state', () => {
   let selectedGame = $ref<string>()
   let figureRecord = $ref<FigureRecord>()
   const figureLink = $ref<FigureLink>(defaultFigureLink)
+  const actionLink = $ref<ActionLink>(defaultActionLink)
 
   const selectedGameInfo = $computed(() => {
     if (gameRecord && selectedGame) {
@@ -59,9 +74,10 @@ export const useStateStore = defineStore('state', () => {
     selectedGameInfo,
     figureRecord,
     figureLink,
+    actionLink,
   })
 }, {
   persist: {
-    pick: ['webgalPath', 'selectedGame', 'figureLink'],
+    pick: ['webgalPath', 'selectedGame', 'figureLink', 'actionLink'],
   },
 })

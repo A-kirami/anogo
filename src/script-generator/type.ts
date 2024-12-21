@@ -8,22 +8,9 @@ export interface NarrationStatement {
 
 export interface DialogueStatement {
   角色: string
-  动作: EmotionAction
+  动作: string
   对话: string
 }
-
-export type EmotionAction =
-  | '生气'
-  | '告别'
-  | '哭泣'
-  | '感动'
-  | '决心'
-  | '悲伤'
-  | '认真'
-  | '害羞'
-  | '微笑'
-  | '惊讶'
-  | '思考'
 
 export type SceneStatement = BackgroundStatement | NarrationStatement | DialogueStatement
 
