@@ -65,9 +65,11 @@ function getFigureID(figureLink: FigureLink, name: string): string | undefined {
   return undefined
 }
 
-function getAction(actionLink: ActionLink, key: string): string | undefined {
+const DEFAULT_ACTION = 'idle'
+
+function getAction(actionLink: ActionLink, key: string): string {
   const item = actionLink.find(obj => obj.key === key)
-  return item ? item.value : undefined
+  return item ? item.value : DEFAULT_ACTION
 }
 
 function getDefaultCostume(costumes: Costume[]): Costume {
@@ -79,8 +81,8 @@ function getDefaultCostume(costumes: Costume[]): Costume {
   return randomChoice(costumes)
 }
 
-function getFigureAction(motions: string[], action?: string): string {
-  const filteredMotions = motions.filter(motion => motion.includes(action ?? 'idle'))
+function getFigureAction(motions: string[], action: string): string {
+  const filteredMotions = motions.filter(motion => motion.includes(action))
   const finalMotions = filteredMotions.length > 0 ? filteredMotions : motions
   return randomChoice(finalMotions)
 }
