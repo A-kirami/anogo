@@ -14,6 +14,7 @@ const settingsSchema = toTypedSchema(
   z.object({
     theme: z.enum(['light', 'dark', 'auto']),
     dialogueAssociateFigure: z.boolean(),
+    enableStrictScript: z.boolean(),
   }),
 )
 
@@ -36,6 +37,7 @@ async function resetForm() {
     formRef.resetForm({ values: {
       theme: settings.theme,
       dialogueAssociateFigure: settings.dialogueAssociateFigure,
+      enableStrictScript: settings.enableStrictScript,
     } })
   }
 }
@@ -84,6 +86,17 @@ onUpdated(resetForm)
               <div class="space-y-0.5">
                 <FormLabel>关联对话角色</FormLabel>
                 <FormDescription>将对话关联到角色以模拟口型同步</FormDescription>
+              </div>
+              <FormControl>
+                <Switch :checked="value" aria-readonly @update:checked="handleChange" />
+              </FormControl>
+            </FormItem>
+          </FormField>
+          <FormField v-slot="{ value, handleChange }" name="enableStrictScript">
+            <FormItem class="max-w-120 flex flex-row items-center justify-between rounded-lg">
+              <div class="space-y-0.5">
+                <FormLabel>启用严格脚本模式</FormLabel>
+                <FormDescription>对输入脚本的格式和内容进行严格检查</FormDescription>
               </div>
               <FormControl>
                 <Switch :checked="value" aria-readonly @update:checked="handleChange" />

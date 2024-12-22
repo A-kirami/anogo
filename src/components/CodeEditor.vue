@@ -6,11 +6,14 @@ import { OverlayScrollbarsComponent } from 'overlayscrollbars-vue'
 import { Codemirror } from 'vue-codemirror'
 import YAML from 'yaml'
 
-import { sceneScriptSchema } from '~/script-generator/schema'
-
-import type { EditorView } from '@codemirror/view'
+import type { EditorState, Extension } from '@codemirror/state'
+import type { EditorView, PluginValue, ViewPlugin } from '@codemirror/view'
 
 const state = useStateStore()
+
+const settings = useSettingsStore()
+
+const scriptSchema = $(useScriptSchema())
 
 const yamlLinter = linter((view: EditorView) => {
   const doc = YAML.parseDocument(view.state.doc.toString())
@@ -23,7 +26,7 @@ const yamlLinter = linter((view: EditorView) => {
       message,
     }
   })
-  const result = sceneScriptSchema.safeParse(doc.toJS())
+  const result = scriptSchema.safeParse(doc.toJS())
   if (!result.success) {
     const mainError = result.error.issues[0]
     const node = doc.getIn(mainError.path, true)
@@ -55,6 +58,34 @@ const extensions = $computed(() => {
 const ScrollbarsOptions = computed(() => {
   return { scrollbars: { theme: isDark ? 'os-theme-light' : 'os-theme-dark' } } as const
 })
+
+let codeMirrorView = $shallowRef<EditorView>()
+
+function handleReady({ view }: {
+  view: EditorView
+  state: EditorState
+  container: HTMLDivElement
+}) {
+  codeMirrorView = view
+}
+
+const [_config, lintPlugin, _exts] = yamlLinter as Extension[]
+
+// based on discussion here:
+// https://discuss.codemirror.net/t/can-we-manually-force-linting-even-if-the-document-hasnt-changed/3570
+function forceLinting(view: EditorView) {
+  const plugin = view.plugin(lintPlugin as ViewPlugin<PluginValue & { set: boolean, force: () => void }>)
+  if (plugin) {
+    plugin.set = true
+    plugin.force()
+  }
+}
+
+watch(() => [scriptSchema, settings.enableStrictScript], () => {
+  if (codeMirrorView) {
+    forceLinting(codeMirrorView)
+  }
+})
 </script>
 
 <template>
@@ -69,6 +100,7 @@ const ScrollbarsOptions = computed(() => {
       placeholder="粘贴 YAML 格式脚本到此处"
       :extensions="extensions"
       :autofocus="true"
+      @ready="handleReady"
     />
   </OverlayScrollbarsComponent>
 </template>
