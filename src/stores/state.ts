@@ -33,7 +33,7 @@ export const useStateStore = defineStore('state', () => {
   const editorCode = $ref<string>('')
   const scriptCode = $ref<string>('')
   const validated = $ref(true)
-  const webgalPath = $ref<string>()
+  let webgalPath = $ref<string>()
   let gameRecord = $ref<GameRecord>()
   let selectedGame = $ref<string>()
   let figureRecord = $ref<FigureRecord>()
@@ -50,7 +50,14 @@ export const useStateStore = defineStore('state', () => {
     if (!basePath) {
       return
     }
-    gameRecord = await invoke<GameRecord>('list_games', { basePath })
+    try {
+      gameRecord = await invoke<GameRecord>('list_games', { basePath })
+    } catch (error) {
+      webgalPath = undefined
+      selectedGame = undefined
+      void logger.error(`获取游戏失败: ${error}`)
+      return
+    }
     if (selectedGame && !(selectedGame in gameRecord)) {
       selectedGame = undefined
     }
