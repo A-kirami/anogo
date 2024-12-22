@@ -33,5 +33,6 @@ function processSceneScript(script: SceneScript): (string | string[])[] {
 
 export function generateScript(sceneScript: SceneScript): string {
   const scriptsStatements = processSceneScript(sceneScript)
-  return scriptsStatements.flat().join(`;${getEOL()}`)
+  const separator = `;${getEOL()}`
+  return scriptsStatements.flat().join(separator) + separator
 }
