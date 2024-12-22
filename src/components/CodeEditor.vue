@@ -42,7 +42,7 @@ const yamlLinter = linter((view: EditorView) => {
   }
   state.validated = errors.length === 0
   return errors
-})
+}, { delay: 0 })
 
 let { system, store } = inject('themeMode') as { system: ComputedRef<'dark' | 'light'>, store: ComputedRef<'dark' | 'light' | 'auto'> }
 
