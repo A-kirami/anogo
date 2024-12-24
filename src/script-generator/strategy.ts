@@ -22,7 +22,7 @@ export const statementStrategy = [
       const { 角色: figure, 对话: dialogue, 动作: action } = stmt
       const dialogueArray = [`${figure}:`, dialogue]
       if (state.figureRecord) {
-        const figureID = getFigureID(state.figureLink, figure)
+        const figureID = getFigureID(state.figureRecord, state.figureLink, figure)
         if (figureID) {
           const defaultCostume = getDefaultCostume(state.figureRecord[figureID].costumes)
           const figureFile = defaultCostume.path
@@ -56,9 +56,10 @@ export const statementStrategy = [
   },
 ] as StrategyObject[]
 
-function getFigureID(figureLink: FigureLink, name: string): string | undefined {
-  for (const [id, names] of Object.entries(figureLink)) {
-    if (names.includes(name)) {
+function getFigureID(figureRecord: FigureRecord, figureLink: FigureLink, name: string): string | undefined {
+  for (const id of Object.keys(figureRecord)) {
+    const linkNames = figureLink[id] ?? []
+    if (linkNames.includes(name)) {
       return id
     }
   }
