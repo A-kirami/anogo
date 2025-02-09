@@ -20,7 +20,7 @@ const settingsSchema = toTypedSchema(
 
 const formRef = $ref<InstanceType<typeof Form>>()
 
-const onSubmit = getSubmitFn(settingsSchema, async (values) => {
+const onSubmit = getSubmitFn(settingsSchema, (values) => {
   settings.$patch(values)
   open.value = false
   notify.success('设置保存成功')
@@ -32,13 +32,15 @@ const themeOptions = {
   auto: '自动',
 }
 
+const settingsKeys = Object.keys(settings.$state) as (keyof typeof settings.$state)[]
+
 async function resetForm() {
   if (formRef) {
-    formRef.resetForm({ values: {
-      theme: settings.theme,
-      dialogueAssociateFigure: settings.dialogueAssociateFigure,
-      enableStrictScript: settings.enableStrictScript,
-    } })
+    let initialValues = {} as Record<string, unknown>
+    for (const key of settingsKeys) {
+      initialValues[key] = settings[key]
+    }
+    formRef.resetForm({ values: initialValues })
   }
 }
 
