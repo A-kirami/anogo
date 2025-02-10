@@ -18,9 +18,16 @@ export const statementStrategy = [
     keys: ['角色', '动作', '对话'],
     handle: (stmt: DialogueStatement) => {
       const state = useStateStore()
+      const settings = useSettingsStore()
       const result: string[] = []
-      const { 角色: figure, 对话: dialogue, 动作: action } = stmt
-      const dialogueArray = [`${figure}:`, dialogue]
+      const { 角色: figure, 动作: action, 对话: dialogue } = stmt
+      const dialogueArray = [`${figure}:`]
+      if (settings.removeTrailingPeriodInDialogue) {
+        const newDialogue = dialogue.replace(/。$/, '')
+        dialogueArray.push(newDialogue)
+      } else {
+        dialogueArray.push(dialogue)
+      }
       if (state.figureRecord) {
         const figureID = getFigureID(state.figureRecord, state.figureLink, figure)
         if (figureID) {
