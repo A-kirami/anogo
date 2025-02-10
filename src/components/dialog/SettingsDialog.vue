@@ -15,6 +15,7 @@ const settingsSchema = toTypedSchema(
     theme: z.enum(['light', 'dark', 'auto']),
     dialogueAssociateFigure: z.boolean(),
     enableStrictScript: z.boolean(),
+    removeTrailingPeriodInDialogue: z.boolean(),
   }),
 )
 
@@ -99,6 +100,17 @@ onUpdated(resetForm)
               <div class="space-y-0.5">
                 <FormLabel>启用严格脚本模式</FormLabel>
                 <FormDescription>对输入脚本的格式和内容进行严格检查</FormDescription>
+              </div>
+              <FormControl>
+                <Switch :checked="value" aria-readonly @update:checked="handleChange" />
+              </FormControl>
+            </FormItem>
+          </FormField>
+          <FormField v-slot="{ value, handleChange }" name="removeTrailingPeriodInDialogue">
+            <FormItem class="max-w-120 flex flex-row items-center justify-between rounded-lg">
+              <div class="space-y-0.5">
+                <FormLabel>移除对话末尾的句号</FormLabel>
+                <FormDescription>在生成脚本时移除对话末尾的句号</FormDescription>
               </div>
               <FormControl>
                 <Switch :checked="value" aria-readonly @update:checked="handleChange" />
