@@ -67,8 +67,13 @@ export const useStateStore = defineStore('state', () => {
     if (!gameInfo) {
       return
     }
-    const analyzeResult = await invoke<FigureRecord>('analyze_figure', { path: gameInfo.path })
-    figureRecord = Object.keys(analyzeResult).length > 0 ? analyzeResult : undefined
+    try {
+      const analyzeResult = await invoke<FigureRecord>('analyze_figure', { path: gameInfo.path })
+      figureRecord = Object.keys(analyzeResult).length > 0 ? analyzeResult : undefined
+    } catch (error) {
+      notify.error('分析立绘失败')
+      void logger.error(`分析立绘失败: ${error}`)
+    }
   }, { immediate: true })
 
   return $$({
