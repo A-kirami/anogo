@@ -48,7 +48,7 @@ const activeTab = $ref<'figure' | 'action'>('figure')
               <div v-for="{id, path} in gameFigures" :key="id" class="space-y-2">
                 <div class="flex flex-wrap items-baseline gap-2 overflow-hidden">
                   <span class="text-lg text-primary/80 font-semibold">{{ id }}</span>
-                  <span class="truncate text-sm text-muted-foreground">{{ path }}</span>
+                  <span class="truncate text-sm text-muted-foreground" style="direction: rtl;">{{ path }}</span>
                 </div>
                 <TagsInput v-model="state.figureLink[id]">
                   <TagsInputItem v-for="item in state.figureLink[id]" :key="item" :value="item">
