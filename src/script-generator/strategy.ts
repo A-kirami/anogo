@@ -33,13 +33,12 @@ export const statementStrategy = [
         if (figureID) {
           const defaultCostume = getDefaultCostume(state.figureRecord[figureID].costumes)
           const figureFile = defaultCostume.path
-          const defaultTransform = getDefaultTransform()
           const figureAction = findAction(state.actionLink, action) || settings.figureDefaultAction || 'idle'
           const figureMotion = getFigureAction(defaultCostume.motions, figureAction)
           const figureExpression = getFigureAction(defaultCostume.expressions, figureAction)
           const argsMap = {
             id: figureID,
-            transform: defaultTransform,
+            transform: settings.figureDefaultTransform || undefined,
             next: '',
             motion: figureMotion,
             expression: figureExpression,
@@ -90,10 +89,6 @@ function getFigureAction(motions: string[], action: string): string {
   const filteredMotions = motions.filter(motion => motion.includes(action))
   const finalMotions = filteredMotions.length > 0 ? filteredMotions : motions
   return randomChoice(finalMotions)
-}
-
-function getDefaultTransform(): string | undefined {
-  return '{"position":{"x":220,"y":-190},"scale":{"x":0.83,"y":0.83}}'
 }
 
 function buildArg(key: string, value: unknown): string {

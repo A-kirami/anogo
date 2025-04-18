@@ -17,6 +17,7 @@ const settingsSchema = toTypedSchema(
     enableStrictScript: z.boolean(),
     removeTrailingPeriodInDialogue: z.boolean(),
     figureDefaultAction: z.string(),
+    figureDefaultTransform: z.string(),
   }),
 )
 
@@ -126,6 +127,18 @@ onUpdated(resetForm)
               </FormControl>
               <FormDescription>
                 当角色动作不存在时，默认使用此动作
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          </FormField>
+          <FormField v-slot="{ componentField }" name="figureDefaultTransform">
+            <FormItem>
+              <FormLabel>角色显示效果</FormLabel>
+              <FormControl>
+                <Input type="text" v-bind="componentField" />
+              </FormControl>
+              <FormDescription>
+                为所有角色应用此显示效果
               </FormDescription>
               <FormMessage />
             </FormItem>
