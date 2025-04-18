@@ -15,11 +15,12 @@ fn get_game_dir(base_path: &str,) -> PathBuf {
 }
 
 fn list_directories(path: &Path,) -> Result<Vec<String,>, String,> {
-    let entries = fs::read_dir(path,).map_err(|e| e.to_string(),)?;
+    let entries =
+        fs::read_dir(path,).map_err(|e| format!("无法读取目录'{}': {}", path.display(), e),)?;
     let mut directories = Vec::new();
 
     for entry in entries {
-        let entry = entry.map_err(|e| e.to_string(),)?;
+        let entry = entry.map_err(|e| format!("目录条目访问失败: {}", e),)?;
         let path = entry.path();
         if path.is_dir() {
             if let Some(dir_name,) = path.file_name().and_then(|name| name.to_str(),) {
@@ -37,7 +38,8 @@ fn get_icon_path(game_path: &Path,) -> PathBuf {
 
 fn get_icon_data_url(icon_path: &PathBuf,) -> Result<String, String,> {
     if icon_path.exists() {
-        let icon_data = fs::read(icon_path,).map_err(|e| e.to_string(),)?;
+        let icon_data = fs::read(icon_path,)
+            .map_err(|e| format!("无法读取图标文件'{}': {}", icon_path.display(), e),)?;
         let encoded = general_purpose::STANDARD.encode(&icon_data,);
         let data_url = format!("data:image/png;base64,{}", encoded);
         Ok(data_url,)
@@ -79,18 +81,15 @@ pub fn list_games(base_path: String,) -> Result<HashMap<String, GameInfo,>, Stri
 #[tauri::command]
 pub fn write_file(contents: Vec<u8,>, path: PathBuf, overwrite: bool,) -> Result<(), String,> {
     if overwrite || !path.exists() {
-        let mut file = match File::create(&path,) {
-            Ok(file,) => file,
-            Err(err,) => return Err(format!("创建文件失败: {}", err),),
-        };
+        let mut file = File::create(&path,)
+            .map_err(|err| format!("创建文件'{}'失败: {}", path.display(), err),)?;
 
-        if let Err(err,) = file.write_all(&contents,) {
-            return Err(format!("写入文件失败: {}", err),);
-        }
+        file.write_all(&contents,)
+            .map_err(|err| format!("写入文件'{}'失败: {}", path.display(), err),)?;
 
         Ok((),)
     } else {
-        Err("文件已存在".into(),)
+        Err(format!("文件'{}'已存在且不允许覆盖", path.display()),)
     }
 }
 
@@ -101,7 +100,10 @@ use serde_json::{Map, Value};
 pub fn analyze_figure(path: String,) -> Result<Map<String, Value,>, String,> {
     let figure_dir = Path::new(&path,).join("game/figure",);
     if !figure_dir.is_dir() {
-        return Err("figure 目录不存在".to_string(),);
+        return Err(format!(
+            "路径'{}'中的figure目录不存在",
+            figure_dir.display()
+        ),);
     }
 
     let json_files = get_json_files(&figure_dir,)?;
@@ -112,12 +114,24 @@ pub fn analyze_figure(path: String,) -> Result<Map<String, Value,>, String,> {
 }
 
 fn get_json_files(dir: &Path,) -> Result<Vec<PathBuf,>, String,> {
-    let pattern = dir.join("**/*.json",).to_str().unwrap().to_string();
+    let pattern = dir
+        .join("**/*.json",)
+        .to_str()
+        .ok_or("无效的非UTF8路径",)?
+        .to_string();
+
     let mut files = Vec::new();
-    for entry in glob(&pattern,).expect("无法读取 glob 模式",) {
+    for entry in glob(&pattern,).map_err(|e| format!("处理glob模式'{}'失败: {}", pattern, e),)?
+    {
         match entry {
             Ok(path,) => files.push(path,),
-            Err(e,) => return Err(format!("读取文件失败: {}", e),),
+            Err(e,) => {
+                return Err(format!(
+                    "遍历文件失败: {} (路径: {})",
+                    e,
+                    e.path().display()
+                ),)
+            }
         }
     }
     Ok(files,)
@@ -126,8 +140,10 @@ fn get_json_files(dir: &Path,) -> Result<Vec<PathBuf,>, String,> {
 fn filter_model_files(files: &[PathBuf],) -> Result<Vec<PathBuf,>, String,> {
     let mut model_files = Vec::new();
     for file in files {
-        let content = fs::read_to_string(file,).map_err(|e| e.to_string(),)?;
-        let json: Value = serde_json::from_str(&content,).map_err(|e| e.to_string(),)?;
+        let content = fs::read_to_string(file,)
+            .map_err(|e| format!("读取文件'{}'失败: {}", file.display(), e),)?;
+        let json: Value = serde_json::from_str(&content,)
+            .map_err(|e| format!("解析JSON文件'{}'失败: {}", file.display(), e),)?;
         if json.get("model",).is_some()
             && json.get("physics",).is_some()
             && json.get("textures",).is_some()
@@ -151,11 +167,20 @@ fn build_character_data(
 
         let relative_path = file
             .strip_prefix(figure_dir,)
-            .map_err(|e| e.to_string(),)?
+            .map_err(|e| {
+                format!(
+                    "路径转换失败: 无法从'{}'去除前缀'{}': {}",
+                    file.display(),
+                    figure_dir.display(),
+                    e
+                )
+            },)?
             .to_string_lossy()
             .replace('\\', "/",);
-        let content = fs::read_to_string(file,).map_err(|e| e.to_string(),)?;
-        let model: Value = serde_json::from_str(&content,).map_err(|e| e.to_string(),)?;
+        let content = fs::read_to_string(file,)
+            .map_err(|e| format!("读取角色文件'{}'失败: {}", file.display(), e),)?;
+        let model: Value = serde_json::from_str(&content,)
+            .map_err(|e| format!("解析角色文件'{}'失败: {}", file.display(), e),)?;
 
         let motions: Vec<String,> = model
             .get("motions",)
@@ -206,11 +231,11 @@ fn get_names_from_path(path: &Path,) -> Result<(String, String,), String,> {
     let costume_name = components
         .next()
         .and_then(|c| c.as_os_str().to_str().map(|s| s.to_string(),),)
-        .ok_or("路径无效：未找到服装名称",)?;
+        .ok_or_else(|| format!("路径'{}'中未找到服装名称", path.display()),)?;
     let character_name = components
         .next()
         .and_then(|c| c.as_os_str().to_str().map(|s| s.to_string(),),)
-        .ok_or("路径无效：未找到角色名称",)?;
+        .ok_or_else(|| format!("路径'{}'中未找到角色名称", path.display()),)?;
     Ok((costume_name, character_name,),)
 }
 
@@ -229,7 +254,10 @@ fn get_character_path(path: &Path,) -> Result<String, String,> {
     }
 
     if path_components.is_empty() {
-        return Err("路径无效：未找到 figure 目录".to_string(),);
+        return Err(format!(
+            "路径'{}'中未找到有效的figure目录结构",
+            path.display()
+        ),);
     }
 
     path_components.reverse();
