@@ -33,7 +33,7 @@ const activeTab = $ref<'figure' | 'action'>('figure')
           {{ activeTab === 'figure'? '将立绘文件夹与角色名进行关联' : '将动作名与角色动作进行关联' }}
         </DialogDescription>
       </DialogHeader>
-      <Tabs v-model="activeTab" class="flex flex-col">
+      <Tabs v-model="activeTab" class="flex flex-col overflow-hidden">
         <TabsList class="grid grid-cols-2 w-full">
           <TabsTrigger value="figure">
             立绘
@@ -46,7 +46,7 @@ const activeTab = $ref<'figure' | 'action'>('figure')
           <OverlayScrollbarsComponent defer class="px-2 py-1">
             <div class="flex flex-col gap-2">
               <div v-for="{id, path} in gameFigures" :key="id" class="space-y-2">
-                <div class="flex items-baseline gap-2 overflow-hidden">
+                <div class="flex flex-wrap items-baseline gap-2 overflow-hidden">
                   <span class="text-lg text-primary/80 font-semibold">{{ id }}</span>
                   <span class="truncate text-sm text-muted-foreground">{{ path }}</span>
                 </div>
