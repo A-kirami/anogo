@@ -34,7 +34,7 @@ export const statementStrategy = [
           const defaultCostume = getDefaultCostume(state.figureRecord[figureID].costumes)
           const figureFile = defaultCostume.path
           const defaultTransform = getDefaultTransform()
-          const figureAction = getAction(state.actionLink, action) || settings.figureDefaultAction || 'idle'
+          const figureAction = findAction(state.actionLink, action) || settings.figureDefaultAction || 'idle'
           const figureMotion = getFigureAction(defaultCostume.motions, figureAction)
           const figureExpression = getFigureAction(defaultCostume.expressions, figureAction)
           const argsMap = {
@@ -81,7 +81,7 @@ function getDefaultCostume(costumes: Costume[]): Costume {
   return randomChoice(costumes)
 }
 
-function getAction(actionLink: ActionLink, key: string): string | undefined {
+function findAction(actionLink: ActionLink, key: string): string | undefined {
   const item = actionLink.find(obj => obj.key === key)
   return item?.value
 }
