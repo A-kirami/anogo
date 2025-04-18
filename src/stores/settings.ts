@@ -6,6 +6,7 @@ export const useSettingsStore = defineStore('settings', () => {
   const enableStrictScript = $ref(false)
   const removeTrailingPeriodInDialogue = $ref(false)
   const figureDefaultAction = $ref('')
+  const figureDefaultTransform = $ref('')
 
   return $$({
     theme,
@@ -13,6 +14,7 @@ export const useSettingsStore = defineStore('settings', () => {
     enableStrictScript,
     removeTrailingPeriodInDialogue,
     figureDefaultAction,
+    figureDefaultTransform,
   })
 }, {
   persist: true,

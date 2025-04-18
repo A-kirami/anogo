@@ -10,6 +10,62 @@ let open = defineModel<boolean>('open')
 
 const settings = useSettingsStore()
 
+const transformSchema = z.string().superRefine((val, ctx) => {
+  if (val === '') {
+    return
+  }
+
+  try {
+    const parsed = JSON.parse(val)
+
+    const shapeSchema = z.object({
+      position: z.object({
+        x: z.number().optional(),
+        y: z.number().optional(),
+      }).optional().refine(
+        obj => !obj || Object.keys(obj).length <= 2,
+        'position 只能包含 x 和 y 属性',
+      ),
+
+      scale: z.object({
+        x: z.number().optional(),
+        y: z.number().optional(),
+      }).optional().refine(
+        obj => !obj || Object.keys(obj).length <= 2,
+        'scale 只能包含 x 和 y 属性',
+      ),
+
+      alpha: z.number()
+        .min(0, 'alpha 最小值为 0')
+        .max(1, 'alpha 最大值为 1')
+        .optional(),
+
+      ...Object.fromEntries(['rotation', 'blur', 'oldFilm', 'dotFilm', 'reflectionFilm', 'glitchFilm', 'rgbFilm', 'godrayFilm']
+        .map(key => [key, z.number()
+          .int(`${key} 必须是整数`)
+          .refine(v => v === 0 || v === 1, `${key} 只能是 0 或 1`)
+          .optional()])),
+
+    }).strict('包含未知属性').partial()
+
+    const result = shapeSchema.safeParse(parsed)
+    if (!result.success) {
+      for (const issue of result.error.issues) {
+        ctx.addIssue({
+          ...issue,
+          path: issue.path,
+        })
+      }
+    }
+  } catch {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: '必须是有效的 JSON 格式字符串',
+      path: [],
+    })
+  }
+})
+
 const settingsSchema = toTypedSchema(
   z.object({
     theme: z.enum(['light', 'dark', 'auto']),
@@ -17,6 +73,7 @@ const settingsSchema = toTypedSchema(
     enableStrictScript: z.boolean(),
     removeTrailingPeriodInDialogue: z.boolean(),
     figureDefaultAction: z.string(),
+    figureDefaultTransform: transformSchema,
   }),
 )
 
@@ -126,6 +183,18 @@ onUpdated(resetForm)
               </FormControl>
               <FormDescription>
                 当角色动作不存在时，默认使用此动作
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          </FormField>
+          <FormField v-slot="{ componentField }" name="figureDefaultTransform">
+            <FormItem>
+              <FormLabel>角色显示效果</FormLabel>
+              <FormControl>
+                <Input type="text" v-bind="componentField" />
+              </FormControl>
+              <FormDescription>
+                为所有角色应用此显示效果
               </FormDescription>
               <FormMessage />
             </FormItem>
