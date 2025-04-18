@@ -16,6 +16,7 @@ const settingsSchema = toTypedSchema(
     dialogueAssociateFigure: z.boolean(),
     enableStrictScript: z.boolean(),
     removeTrailingPeriodInDialogue: z.boolean(),
+    figureDefaultAction: z.string(),
   }),
 )
 
@@ -115,6 +116,18 @@ onUpdated(resetForm)
               <FormControl>
                 <Switch :checked="value" aria-readonly @update:checked="handleChange" />
               </FormControl>
+            </FormItem>
+          </FormField>
+          <FormField v-slot="{ componentField }" name="figureDefaultAction">
+            <FormItem>
+              <FormLabel>角色默认动作</FormLabel>
+              <FormControl>
+                <Input type="text" placeholder="idle" v-bind="componentField" />
+              </FormControl>
+              <FormDescription>
+                当角色动作不存在时，默认使用此动作
+              </FormDescription>
+              <FormMessage />
             </FormItem>
           </FormField>
         </Form>
