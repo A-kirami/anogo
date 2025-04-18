@@ -23,6 +23,8 @@ document.addEventListener('contextmenu', (e) => {
 })
 
 onMounted(async () => {
+  await logger.attachConsole()
+
   if (isRelease) {
     try {
       const update = await check()
