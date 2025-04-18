@@ -54,7 +54,7 @@ onUpdated(resetForm)
     <DialogTrigger as-child>
       <slot />
     </DialogTrigger>
-    <DialogContent class="grid-rows-[auto_minmax(0,1fr)_auto] max-h-[85dvh]">
+    <DialogContent class="grid-rows-[auto_minmax(0,1fr)_auto] max-h-[85dvh]" @open-auto-focus.prevent>
       <DialogHeader>
         <DialogTitle>设置</DialogTitle>
         <DialogDescription>
