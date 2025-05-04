@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { invoke } from '@tauri-apps/api/core'
 import { join } from '@tauri-apps/api/path'
 import { writeText } from '@tauri-apps/plugin-clipboard-manager'
 import { save } from '@tauri-apps/plugin-dialog'
@@ -31,7 +30,7 @@ async function createSceneFile() {
     let encoder = new TextEncoder()
     let data = encoder.encode(state.scriptCode)
     try {
-      await invoke('write_file', { contents: data, path, overwrite: true })
+      await Commands.writeFile(data, path, true)
       notify.success('脚本文件已创建')
     } catch (error) {
       notify.error('脚本文件创建失败')

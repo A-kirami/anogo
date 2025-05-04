@@ -1,4 +1,3 @@
-import { invoke } from '@tauri-apps/api/core'
 import { defineStore } from 'pinia'
 
 const defaultFigureLink = {
@@ -51,7 +50,7 @@ export const useStateStore = defineStore('state', () => {
       return
     }
     try {
-      gameRecord = await invoke<GameRecord>('list_games', { basePath })
+      gameRecord = await Commands.listGames(basePath)
     } catch (error) {
       webgalPath = undefined
       selectedGame = undefined
@@ -68,7 +67,7 @@ export const useStateStore = defineStore('state', () => {
       return
     }
     try {
-      const analyzeResult = await invoke<FigureRecord>('analyze_figure', { path: gameInfo.path })
+      const analyzeResult = await Commands.analyzeFigure(gameInfo.path)
       figureRecord = Object.keys(analyzeResult).length > 0 ? analyzeResult : undefined
     } catch (error) {
       notify.error('分析立绘失败')

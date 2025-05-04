@@ -37,6 +37,7 @@ export default defineConfig({
         },
       ],
       dirs: [
+        'src/commands',
         'src/composables',
         'src/stores',
         'src/utils',
