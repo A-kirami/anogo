@@ -41,7 +41,7 @@ onMounted(async () => {
 
 <template>
   <div class="grid grid-rows-[auto_minmax(0,1fr)] h-screen">
-    <WindowTitlebar class="h-7" />
+    <AppTitlebar />
     <div class="w-screen flex flex-col gap-3 px-6 py-3">
       <Menubar />
       <CodeEditor class="grow" />
