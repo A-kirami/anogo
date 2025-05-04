@@ -7,7 +7,7 @@ export const Commands = {
    * @param path 文件路径
    * @param overwrite 是否覆盖
    */
-  async writeFile(contents: number[], path: string, overwrite = false) {
+  async writeFile(contents: Uint8Array, path: string, overwrite = false) {
     return await invoke<void>('write_file', { contents, path, overwrite })
   },
 
