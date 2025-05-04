@@ -142,8 +142,15 @@ fn filter_model_files(files: &[PathBuf],) -> Result<Vec<PathBuf,>, String,> {
     for file in files {
         let content = fs::read_to_string(file,)
             .map_err(|e| format!("读取文件'{}'失败: {}", file.display(), e),)?;
-        let json: Value = serde_json::from_str(&content,)
-            .map_err(|e| format!("解析JSON文件'{}'失败: {}", file.display(), e),)?;
+
+        let json: Value = match serde_json::from_str(&content,) {
+            Ok(json,) => json,
+            Err(e,) => {
+                log::warn!("解析JSON文件'{}'失败: {}", file.display(), e);
+                continue;
+            }
+        };
+
         if json.get("model",).is_some()
             && json.get("physics",).is_some()
             && json.get("textures",).is_some()
