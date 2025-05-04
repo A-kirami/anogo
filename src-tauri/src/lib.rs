@@ -1,6 +1,6 @@
 use tauri::{Manager, WebviewUrl, WebviewWindowBuilder};
 
-mod command;
+mod commands;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -57,9 +57,9 @@ pub fn run() {
         .plugin(tauri_plugin_clipboard_manager::init(),)
         .plugin(tauri_plugin_opener::init(),)
         .invoke_handler(tauri::generate_handler![
-            command::list_games,
-            command::write_file,
-            command::analyze_figure
+            commands::list_games,
+            commands::write_file,
+            commands::analyze_figure
         ],)
         .run(tauri::generate_context!(),)
         .expect("error while running tauri application",);
