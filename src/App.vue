@@ -16,12 +16,6 @@ const themeMode = useColorMode({
 
 provide('themeMode', themeMode)
 
-document.addEventListener('contextmenu', (e) => {
-  if (import.meta.env.PROD) {
-    e.preventDefault()
-  }
-})
-
 onMounted(async () => {
   await logger.attachConsole()
 

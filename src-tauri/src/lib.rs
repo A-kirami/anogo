@@ -56,6 +56,11 @@ pub fn run() {
         .plugin(tauri_plugin_process::init(),)
         .plugin(tauri_plugin_clipboard_manager::init(),)
         .plugin(tauri_plugin_opener::init(),)
+        .plugin(
+            tauri_plugin_prevent_default::Builder::new()
+                .with_flags(tauri_plugin_prevent_default::Flags::debug(),)
+                .build(),
+        )
         .invoke_handler(tauri::generate_handler![
             commands::list_games,
             commands::write_file,
