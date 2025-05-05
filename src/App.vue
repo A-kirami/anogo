@@ -28,7 +28,7 @@ onMounted(async () => {
   if (isRelease) {
     try {
       const update = await check()
-      if (update?.available) {
+      if (update) {
         await update.downloadAndInstall()
         await relaunch()
       }
