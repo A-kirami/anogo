@@ -113,29 +113,66 @@ pub fn analyze_figure(path: String,) -> Result<Map<String, Value,>, String,> {
     Ok(character_data,)
 }
 
+// 实现对jsonl拼好模的支持
+// 嗯，jsonl也可以是json
 fn get_json_files(dir: &Path,) -> Result<Vec<PathBuf,>, String,> {
-    let pattern = dir
-        .join("**/*.json",)
-        .to_str()
-        .ok_or("无效的非UTF8路径",)?
-        .to_string();
+    use std::collections::HashSet;
 
+    let pattern = format!("{}/**/*", dir.display());
     let mut files = Vec::new();
-    for entry in glob(&pattern,).map_err(|e| format!("处理glob模式'{}'失败: {}", pattern, e),)?
-    {
+    let mut skip_dirs: HashSet<PathBuf> = HashSet::new();
+
+    for entry in glob(&pattern).map_err(|e| format!("处理glob模式'{}'失败: {}", pattern, e))? {
         match entry {
-            Ok(path,) => files.push(path,),
-            Err(e,) => {
+            Ok(path) => {
+                if path.is_dir() {
+                    continue;
+                }
+
+                let is_json = path.extension().map(|ext| ext == "json").unwrap_or(false);
+                let is_jsonl = path.extension().map(|ext| ext == "jsonl").unwrap_or(false);
+
+                if !is_json && !is_jsonl {
+                    continue;
+                }
+
+                // 如果是 jsonl 文件，则记录所在目录
+                if is_jsonl {
+                    skip_dirs.insert(path.parent().unwrap().to_path_buf());
+                    files.push(path);
+                    continue;
+                }
+
+                // 忽略 .exp.json
+                if path
+                    .file_name()
+                    .and_then(|f| f.to_str())
+                    .map(|name| name.ends_with(".exp.json"))
+                    .unwrap_or(false)
+                {
+                    continue;
+                }
+
+                // 如果属于某个 jsonl 目录或其子目录，跳过
+                if skip_dirs.iter().any(|skip_dir| path.starts_with(skip_dir)) {
+                    continue;
+                }
+
+                files.push(path);
+            }
+            Err(e) => {
                 return Err(format!(
                     "遍历文件失败: {} (路径: {})",
                     e,
                     e.path().display()
-                ),)
+                ));
             }
         }
     }
-    Ok(files,)
+
+    Ok(files)
 }
+
 
 fn filter_model_files(files: &[PathBuf],) -> Result<Vec<PathBuf,>, String,> {
     let mut model_files = Vec::new();
@@ -143,37 +180,58 @@ fn filter_model_files(files: &[PathBuf],) -> Result<Vec<PathBuf,>, String,> {
         let content = fs::read_to_string(file,)
             .map_err(|e| format!("读取文件'{}'失败: {}", file.display(), e),)?;
 
-        let json: Value = match serde_json::from_str(&content,) {
-            Ok(json,) => json,
-            Err(e,) => {
-                log::warn!("解析JSON文件'{}'失败: {}", file.display(), e);
-                continue;
-            }
-        };
+        let is_jsonl = file.extension().map(|ext| ext == "jsonl").unwrap_or(false);
 
-        if json.get("model",).is_some()
-            && json.get("physics",).is_some()
-            && json.get("textures",).is_some()
-            && json.get("motions",).is_some()
-            && json.get("expressions",).is_some()
-        {
-            model_files.push(file.to_path_buf(),);
+        if is_jsonl {
+            // 对于 .jsonl 文件，逐行解析
+            for line in content.lines() {
+                let json: Value = match serde_json::from_str(line,) {
+                    Ok(json,) => json,
+                    Err(e,) => {
+                        // 如果某行解析失败，记录警告但不中断整个文件处理
+                        log::warn!("解析JSONL文件'{}'中的行失败: {}", file.display(), e);
+                        continue;
+                    }
+                };
+                // 检查这一行是否符合模型文件的特征
+                if json.get("model",).is_some()
+                    || (json.get("motions",).is_some() && json.get("expressions",).is_some()) // 考虑motions/expressions这行也是“模型相关”的
+                {
+                    model_files.push(file.to_path_buf(),);
+                    break; // 只要文件里有一行符合条件就够了，避免重复添加
+                }
+            }
+        } else {
+            // 对于普通 .json 文件，一次性解析
+            let json: Value = match serde_json::from_str(&content,) {
+                Ok(json,) => json,
+                Err(e,) => {
+                    log::warn!("解析JSON文件'{}'失败: {}", file.display(), e);
+                    continue;
+                }
+            };
+
+            if json.get("model",).is_some()
+                && json.get("physics",).is_some()
+                && json.get("textures",).is_some()
+                && json.get("motions",).is_some()
+                && json.get("expressions",).is_some()
+            {
+                model_files.push(file.to_path_buf(),);
+            }
         }
     }
     Ok(model_files,)
 }
-
 fn build_character_data(
     figure_dir: &Path,
     model_files: &[PathBuf],
-) -> Result<Map<String, Value,>, String,> {
-    let mut character_data: Map<String, Value,> = Map::new();
-    for file in model_files {
-        let (costume_name, character_name,) = get_names_from_path(file,)?;
-        let character_path = get_character_path(file,)?;
+) -> Result<Map<String, Value>, String> {
+    let mut character_data: Map<String, Value> = Map::new();
 
+    for file in model_files {
         let relative_path = file
-            .strip_prefix(figure_dir,)
+            .strip_prefix(figure_dir)
             .map_err(|e| {
                 format!(
                     "路径转换失败: 无法从'{}'去除前缀'{}': {}",
@@ -181,56 +239,132 @@ fn build_character_data(
                     figure_dir.display(),
                     e
                 )
-            },)?
+            })?
             .to_string_lossy()
-            .replace('\\', "/",);
-        let content = fs::read_to_string(file,)
-            .map_err(|e| format!("读取角色文件'{}'失败: {}", file.display(), e),)?;
-        let model: Value = serde_json::from_str(&content,)
-            .map_err(|e| format!("解析角色文件'{}'失败: {}", file.display(), e),)?;
+            .replace('\\', "/");
 
-        let motions: Vec<String,> = model
-            .get("motions",)
-            .and_then(|m| m.as_object(),)
-            .map(|m| m.keys().cloned().collect(),)
+        let extension = file.extension().and_then(|e| e.to_str()).unwrap_or("");
+        if extension == "jsonl" {
+            // jsonl 文件：解析最后一行为 motions / expressions
+            let content = fs::read_to_string(file)
+                .map_err(|e| format!("读取 jsonl 文件 '{}' 失败: {}", file.display(), e))?;
+
+            let mut motions = Vec::new();
+            let mut expressions = Vec::new();
+            for line in content.lines().rev() {
+                if let Ok(json) = serde_json::from_str::<Value>(line) {
+                    if json.get("motions").is_some() || json.get("expressions").is_some() {
+                        motions = json.get("motions")
+                            .and_then(|v| v.as_array())
+                            .map(|arr| arr.iter().filter_map(|v| v.as_str().map(|s| s.to_string())).collect())
+                            .unwrap_or_default();
+
+                        expressions = json.get("expressions")
+                            .and_then(|v| v.as_array())
+                            .map(|arr| arr.iter().filter_map(|v| v.as_str().map(|s| s.to_string())).collect())
+                            .unwrap_or_default();
+                        break;
+                    }
+                }
+            }
+
+            let costume_name = file
+                .file_stem()
+                .and_then(|s| s.to_str())
+                .unwrap_or("jsonl")
+                .to_string();
+
+            let character_name = file
+                .parent()
+                .and_then(|p| p.strip_prefix(figure_dir).ok())
+                .and_then(|p| p.to_str())
+                .unwrap_or("jsonl角色")
+                .to_string();
+
+            let character_info = character_data
+                .entry(character_name.clone())
+                .or_insert_with(|| {
+                    serde_json::json!({
+                        "name": character_name,
+                        "path": character_name,
+                        "costumes": []
+                    })
+                });
+
+            if let Some(costumes_array) = character_info.get_mut("costumes").and_then(|c| c.as_array_mut()) {
+                costumes_array.push(serde_json::json!({
+                    "name": costume_name,
+                    "path": relative_path,
+                    "motions": motions,
+                    "expressions": expressions
+                }));
+            }
+
+            continue;
+        }
+
+        // 普通 model.json 文件处理
+        let (costume_name, character_name) = match get_names_from_path(file) {
+            Ok(v) => v,
+            Err(e) => {
+                log::warn!("跳过无效模型 '{}': {}", file.display(), e);
+                continue;
+            }
+        };
+
+        let character_path = match get_character_path(file) {
+            Ok(v) => v,
+            Err(e) => {
+                log::warn!("跳过无效模型 '{}': {}", file.display(), e);
+                continue;
+            }
+        };
+
+        let content = fs::read_to_string(file)
+            .map_err(|e| format!("读取角色文件'{}'失败: {}", file.display(), e))?;
+
+        let model: Value = serde_json::from_str(&content)
+            .map_err(|e| format!("解析角色文件'{}'失败: {}", file.display(), e))?;
+
+        let motions: Vec<String> = model
+            .get("motions")
+            .and_then(|m| m.as_object())
+            .map(|m| m.keys().cloned().collect())
             .unwrap_or_default();
-        let expressions: Vec<String,> = model
-            .get("expressions",)
-            .and_then(|e| e.as_array(),)
+
+        let expressions: Vec<String> = model
+            .get("expressions")
+            .and_then(|e| e.as_array())
             .map(|e| {
                 e.iter()
-                    .filter_map(|expr| {
-                        expr.get("name",)
-                            .and_then(|n| n.as_str().map(|s| s.to_string(),),)
-                    },)
+                    .filter_map(|expr| expr.get("name").and_then(|n| n.as_str().map(|s| s.to_string())))
                     .collect()
-            },)
+            })
             .unwrap_or_default();
 
         let character_info = character_data
-            .entry(character_name.clone(),)
+            .entry(character_name.clone())
             .or_insert_with(|| {
                 serde_json::json!({
                     "name": character_name,
                     "path": character_path,
                     "costumes": []
                 })
-            },);
+            });
 
-        if let Some(costumes_array,) = character_info
-            .get_mut("costumes",)
-            .and_then(|c| c.as_array_mut(),)
-        {
+        if let Some(costumes_array) = character_info.get_mut("costumes").and_then(|c| c.as_array_mut()) {
             costumes_array.push(serde_json::json!({
                 "name": costume_name,
                 "path": relative_path,
                 "motions": motions,
                 "expressions": expressions
-            }),);
+            }));
         }
     }
-    Ok(character_data,)
+
+    Ok(character_data)
 }
+
 
 fn get_names_from_path(path: &Path,) -> Result<(String, String,), String,> {
     let mut components = path.components().rev();
