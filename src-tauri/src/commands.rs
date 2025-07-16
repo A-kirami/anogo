@@ -119,8 +119,29 @@ fn get_json_files(dir: &Path,) -> Result<Vec<PathBuf,>, String,> {
     use std::collections::HashSet;
 
     let pattern = format!("{}/**/*", dir.display());
-    let mut files = Vec::new();
+    let mut files_to_return = Vec::new(); // 最终要返回的文件列表
     let mut skip_dirs: HashSet<PathBuf> = HashSet::new();
+
+    for entry in glob(&pattern).map_err(|e| format!("处理glob模式'{}'失败: {}", pattern, e))? {
+        match entry {
+            Ok(path) => {
+                if path.is_dir() {
+                    continue;
+                }
+                if path.extension().map(|ext| ext == "jsonl").unwrap_or(false) {
+                    let parent_path = path.parent().unwrap().to_path_buf();
+                    skip_dirs.insert(parent_path);
+                }
+            }
+            Err(e) => {
+                return Err(format!(
+                    "阶段1遍历文件失败: {} (路径: {})",
+                    e,
+                    e.path().display()
+                ));
+            }
+        }
+    }
 
     for entry in glob(&pattern).map_err(|e| format!("处理glob模式'{}'失败: {}", pattern, e))? {
         match entry {
@@ -136,14 +157,7 @@ fn get_json_files(dir: &Path,) -> Result<Vec<PathBuf,>, String,> {
                     continue;
                 }
 
-                // 如果是 jsonl 文件，则记录所在目录
-                if is_jsonl {
-                    skip_dirs.insert(path.parent().unwrap().to_path_buf());
-                    files.push(path);
-                    continue;
-                }
-
-                // 忽略 .exp.json
+                // .exp.json 忽略
                 if path
                     .file_name()
                     .and_then(|f| f.to_str())
@@ -153,16 +167,30 @@ fn get_json_files(dir: &Path,) -> Result<Vec<PathBuf,>, String,> {
                     continue;
                 }
 
-                // 如果属于某个 jsonl 目录或其子目录，跳过
-                if skip_dirs.iter().any(|skip_dir| path.starts_with(skip_dir)) {
+                // 如果是 jsonl 文件，直接添加 (因为它父目录已在阶段1处理过)
+                if is_jsonl {
+                    files_to_return.push(path);
                     continue;
                 }
 
-                files.push(path);
+                // 对于 .json 文件，检查是否在跳过目录或其子目录下
+                let mut should_skip_json = false;
+                for skip_dir in &skip_dirs {
+                    if path.starts_with(skip_dir) {
+                        should_skip_json = true;
+                        break;
+                    }
+                }
+                if should_skip_json {
+                    continue;
+                }
+
+                // 如果是普通的 .json 文件且未被跳过，则添加
+                files_to_return.push(path);
             }
             Err(e) => {
                 return Err(format!(
-                    "遍历文件失败: {} (路径: {})",
+                    "阶段2遍历文件失败: {} (路径: {})",
                     e,
                     e.path().display()
                 ));
@@ -170,9 +198,8 @@ fn get_json_files(dir: &Path,) -> Result<Vec<PathBuf,>, String,> {
         }
     }
 
-    Ok(files)
+    Ok(files_to_return)
 }
-
 
 fn filter_model_files(files: &[PathBuf],) -> Result<Vec<PathBuf,>, String,> {
     let mut model_files = Vec::new();

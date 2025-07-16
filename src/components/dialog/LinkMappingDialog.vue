@@ -141,7 +141,7 @@ watch([searchQuery, prioritizeLinked], async () => {
                     <span class="text-lg text-primary/80 font-semibold">{{ id }}</span>
                     <span class="truncate text-sm text-muted-foreground" style="direction: rtl;">
                       {{ path }}
-                      <span v-if="path.endsWith('.jsonl')" class="ml-2 text-pink-500">(拼好模)</span>
+                      <span v-if="path.endsWith('.jsonl')" class="ml-2 text-pink-500">(聚合模型)</span>
                     </span>
                   </div>
                   <TagsInput v-model="state.figureLink[id]">
