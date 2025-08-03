@@ -234,28 +234,15 @@ fn build_character_data(
 
 fn get_names_from_path(path: &Path,) -> Result<(String, String,), String,> {
     let mut components = path.components().rev();
-
     components.next();
-
     let costume_name = components
         .next()
         .and_then(|c| c.as_os_str().to_str().map(|s| s.to_string(),),)
         .ok_or_else(|| format!("路径'{}'中未找到服装名称", path.display()),)?;
-
-    let character_name = if let Some(character_component,) = components.next() {
-        if character_component.as_os_str() == "figure" {
-            costume_name.clone()
-        } else {
-            character_component
-                .as_os_str()
-                .to_str()
-                .map(|s| s.to_string(),)
-                .ok_or_else(|| format!("路径'{}'中未找到角色名称", path.display()),)?
-        }
-    } else {
-        costume_name.clone()
-    };
-
+    let character_name = components
+        .next()
+        .and_then(|c| c.as_os_str().to_str().map(|s| s.to_string(),),)
+        .ok_or_else(|| format!("路径'{}'中未找到角色名称", path.display()),)?;
     Ok((costume_name, character_name,),)
 }
 
@@ -263,11 +250,7 @@ fn get_character_path(path: &Path,) -> Result<String, String,> {
     let mut components = path.components().rev();
 
     components.next();
-
-    let costume_name = components
-        .next()
-        .and_then(|c| c.as_os_str().to_str().map(|s| s.to_string(),),)
-        .ok_or_else(|| format!("路径'{}'中未找到服装名称", path.display()),)?;
+    components.next();
 
     let mut path_components = Vec::new();
     for component in components {
@@ -278,7 +261,10 @@ fn get_character_path(path: &Path,) -> Result<String, String,> {
     }
 
     if path_components.is_empty() {
-        return Ok(costume_name,);
+        return Err(format!(
+            "路径'{}'中未找到有效的figure目录结构",
+            path.display()
+        ),);
     }
 
     path_components.reverse();
