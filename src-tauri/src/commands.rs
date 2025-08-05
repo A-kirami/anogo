@@ -140,6 +140,14 @@ fn get_json_files(dir: &Path,) -> Result<Vec<PathBuf,>, String,> {
 fn filter_model_files(files: &[PathBuf],) -> Result<Vec<PathBuf,>, String,> {
     let mut model_files = Vec::new();
     for file in files {
+        if let Some(file_name,) = file.file_name().and_then(|name| name.to_str(),) {
+            if !file_name.ends_with("model.json",) && !file_name.ends_with("model3.json",) {
+                continue;
+            }
+        } else {
+            continue;
+        }
+
         let content = fs::read_to_string(file,)
             .map_err(|e| format!("读取文件'{}'失败: {}", file.display(), e),)?;
 
