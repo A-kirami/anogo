@@ -233,62 +233,48 @@ fn build_character_data(
 }
 
 fn get_names_from_path(path: &Path,) -> Result<(String, String,), String,> {
-    let mut components = path.components().rev();
+    let parts: Vec<_,> = path
+        .components()
+        .filter_map(|c| c.as_os_str().to_str(),)
+        .collect();
 
-    components.next();
+    if parts.len() < 2 {
+        return Err(format!("路径'{}'中未找到足够的路径组件", path.display()),);
+    }
 
-    let costume_name = components
-        .next()
-        .and_then(|c| c.as_os_str().to_str().map(|s| s.to_string(),),)
-        .ok_or_else(|| format!("路径'{}'中未找到服装名称", path.display()),)?;
+    let costume = parts[parts.len() - 2].to_string();
 
-    let character_name = if let Some(character_component,) = components.next() {
-        if character_component.as_os_str() == "figure" {
-            costume_name.clone()
-        } else {
-            character_component
-                .as_os_str()
-                .to_str()
-                .map(|s| s.to_string(),)
-                .ok_or_else(|| format!("路径'{}'中未找到角色名称", path.display()),)?
-        }
-    } else {
-        costume_name.clone()
-    };
+    let character = parts
+        .get(parts.len().saturating_sub(3,),)
+        .filter(|&&s| s != "figure",)
+        .map(|&s| s.to_string(),)
+        .unwrap_or_else(|| costume.clone(),);
 
-    Ok((costume_name, character_name,),)
+    Ok((costume, character,),)
 }
 
 fn get_character_path(path: &Path,) -> Result<String, String,> {
-    let mut components = path.components().rev();
+    let parts: Vec<_,> = path
+        .components()
+        .filter_map(|c| c.as_os_str().to_str(),)
+        .collect();
 
-    components.next();
-
-    let costume_name = components
-        .next()
-        .and_then(|c| c.as_os_str().to_str().map(|s| s.to_string(),),)
-        .ok_or_else(|| format!("路径'{}'中未找到服装名称", path.display()),)?;
-
-    let mut path_components = Vec::new();
-    for component in components {
-        if component.as_os_str() == "figure" {
-            break;
-        }
-        path_components.push(component,);
+    if parts.len() < 2 {
+        return Err(format!("路径'{}'中未找到足够的路径组件", path.display()),);
     }
 
-    if path_components.is_empty() {
-        return Ok(costume_name,);
-    }
+    let costume = parts[parts.len() - 2].to_string();
 
-    path_components.reverse();
-
-    let character_path = path_components
+    let figure_idx = parts[..parts.len() - 2]
         .iter()
-        .map(|c| c.as_os_str().to_str().unwrap(),)
-        .collect::<PathBuf>()
-        .to_string_lossy()
-        .replace('\\', "/",);
+        .rposition(|&p| p == "figure",)
+        .map(|i| i + 1,)
+        .unwrap_or(0,);
 
-    Ok(character_path,)
+    let char_parts = &parts[figure_idx..parts.len() - 2];
+    if char_parts.is_empty() {
+        return Ok(costume,);
+    }
+
+    Ok(char_parts.join("/",),)
 }
