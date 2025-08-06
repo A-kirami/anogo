@@ -51,7 +51,7 @@ export const statementStrategy = [
           result.push(changeFigureStmt)
 
           if (settings.dialogueAssociateFigure) {
-            dialogueArray.push(`-figureId=${figureID}`)
+            dialogueArray.push(`-id -figureId=${figureID}`)
           }
         }
       }
