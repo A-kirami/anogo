@@ -33,7 +33,7 @@ export const statementStrategy = [
         if (figureID) {
           const defaultCostume = getDefaultCostume(state.figureRecord[figureID].costumes)
           const figureFile = defaultCostume.path
-          const figureAction = findAction(state.actionLink, action) || settings.figureDefaultAction || 'idle'
+          const figureAction = findAction(state.actionLink, action, figureID) || settings.figureDefaultAction || 'idle'
           const figureMotion = getFigureAction(defaultCostume.motions, figureAction)
           const figureExpression = getFigureAction(defaultCostume.expressions, figureAction)
           const argsMap = {
@@ -80,9 +80,17 @@ function getDefaultCostume(costumes: Costume[]): Costume {
   return randomChoice(costumes)
 }
 
-function findAction(actionLink: ActionLink, key: string): string | undefined {
+function findAction(actionLink: ActionLink, key: string, figureID?: string): string | undefined {
   const item = actionLink.find(obj => obj.key === key)
-  return item?.value
+  if (!item?.value) {
+    return undefined
+  }
+
+  if (figureID && item.value.includes('{name}')) {
+    return item.value.replaceAll('{name}', figureID)
+  }
+
+  return item.value
 }
 
 function getFigureAction(motions: string[], action: string): string {
