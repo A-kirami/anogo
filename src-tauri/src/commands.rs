@@ -138,28 +138,46 @@ fn get_json_files(dir: &Path,) -> Result<Vec<PathBuf,>, String,> {
 }
 
 fn filter_model_files(files: &[PathBuf],) -> Result<Vec<PathBuf,>, String,> {
-    let mut model_files = Vec::new();
-    for file in files {
-        let content = fs::read_to_string(file,)
-            .map_err(|e| format!("读取文件'{}'失败: {}", file.display(), e),)?;
+    const MODEL_SUFFIXES: &[&str] = &["model.json", "model3.json",];
+    const REQUIRED_FIELDS: &[&str] = &["model", "physics", "textures", "motions", "expressions",];
 
-        let json: Value = match serde_json::from_str(&content,) {
-            Ok(json,) => json,
-            Err(e,) => {
-                log::warn!("解析JSON文件'{}'失败: {}", file.display(), e);
-                continue;
+    let model_files = files
+        .iter()
+        .filter(|file| {
+            file.file_name()
+                .and_then(|name| name.to_str(),)
+                .map(|name| MODEL_SUFFIXES.iter().any(|suffix| name.ends_with(suffix,),),)
+                .unwrap_or_else(|| {
+                    log::warn!("跳过无效文件名: {}", file.display());
+                    false
+                },)
+        },)
+        .filter_map(|file| {
+            let content = fs::read_to_string(file,)
+                .map_err(|e| {
+                    log::warn!("读取文件'{}'失败: {}", file.display(), e);
+                    e
+                },)
+                .ok()?;
+
+            let json: Value = serde_json::from_str(&content,)
+                .map_err(|e| {
+                    log::warn!("解析JSON文件'{}'失败: {}", file.display(), e);
+                    e
+                },)
+                .ok()?;
+
+            if REQUIRED_FIELDS
+                .iter()
+                .all(|field| json.get(field,).is_some(),)
+            {
+                Some(file.to_path_buf(),)
+            } else {
+                None
             }
-        };
+        },)
+        .collect();
 
-        if json.get("model",).is_some()
-            && json.get("physics",).is_some()
-            && json.get("textures",).is_some()
-            && json.get("motions",).is_some()
-            && json.get("expressions",).is_some()
-        {
-            model_files.push(file.to_path_buf(),);
-        }
-    }
     Ok(model_files,)
 }
 
