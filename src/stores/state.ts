@@ -70,6 +70,7 @@ export const useStateStore = defineStore('state', () => {
       const analyzeResult = await Commands.analyzeFigure(gameInfo.path)
       figureRecord = Object.keys(analyzeResult).length > 0 ? analyzeResult : undefined
     } catch (error) {
+      figureRecord = undefined
       notify.error('分析立绘失败')
       void logger.error(`分析立绘失败: ${error}`)
     }
