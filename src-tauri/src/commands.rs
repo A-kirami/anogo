@@ -201,49 +201,68 @@ fn get_json_files(dir: &Path,) -> Result<Vec<PathBuf,>, String,> {
     Ok(files_to_return)
 }
 
-fn filter_model_files(files: &[PathBuf],) -> Result<Vec<PathBuf,>, String,> {
-    let mut model_files = Vec::new();
-    for file in files {
-        let content = fs::read_to_string(file,)
-            .map_err(|e| format!("读取文件'{}'失败: {}", file.display(), e),)?;
+fn filter_model_files(files: &[PathBuf]) -> Result<Vec<PathBuf>, String> {
+    const MODEL_SUFFIXES: &[&str] = &["model.json", "model3.json"];
+
+    let mut model_files: Vec<PathBuf> = Vec::new();
+
+    'outer: for file in files {
+        let fname = match file.file_name().and_then(|n| n.to_str()) {
+            Some(n) => n,
+            None => {
+                log::warn!("跳过无效文件名: {}", file.display());
+                continue;
+            }
+        };
 
         let is_jsonl = file.extension().map(|ext| ext == "jsonl").unwrap_or(false);
+        let is_candidate_name = MODEL_SUFFIXES.iter().any(|s| fname.ends_with(s));
+        // 普通 json 要匹配文件名；jsonl 直接尝试解析
+        if !is_jsonl && !is_candidate_name {
+            continue;
+        }
+
+        let content = match fs::read_to_string(file) {
+            Ok(c) => c,
+            Err(e) => {
+                log::warn!("读取文件'{}'失败: {}", file.display(), e);
+                continue;
+            }
+        };
 
         if is_jsonl {
-            // 对于 .jsonl 文件，逐行解析
+            // 逐行检查 jsonl
             for line in content.lines() {
-                let json: Value = match serde_json::from_str(line,) {
-                    Ok(json,) => json,
-                    Err(e,) => {
-                        // 如果某行解析失败，记录警告但不中断整个文件处理
-                        log::warn!("解析JSONL文件'{}'中的行失败: {}", file.display(), e);
-                        continue;
+                match serde_json::from_str::<Value>(line) {
+                    Ok(json) => {
+                        if json.get("model").is_some()
+                            || (json.get("motions").is_some() && json.get("expressions").is_some())
+                        {
+                            model_files.push(file.clone());
+                            continue 'outer; // 这份文件已确认，处理下一个
+                        }
                     }
-                };
-                // 检查这一行是否符合模型文件的特征
-                if json.get("model",).is_some()
-                    || (json.get("motions",).is_some() && json.get("expressions",).is_some()) // 考虑motions/expressions这行也是“模型相关”的
-                {
-                    model_files.push(file.to_path_buf(),);
-                    break; // 只要文件里有一行符合条件就够了，避免重复添加
+                    Err(e) => {
+                        log::warn!("解析JSONL文件'{}'中的行失败: {}", file.display(), e);
+                    }
                 }
             }
         } else {
-            // 对于普通 .json 文件，一次性解析
-            let json: Value = match serde_json::from_str(&content,) {
-                Ok(json,) => json,
-                Err(e,) => {
-                    log::warn!("解析JSON文件'{}'失败: {}", file.display(), e);
-                    continue;
+            // 普通 json
+            match serde_json::from_str::<Value>(&content) {
+                Ok(json) => {
+                    if json.get("model").is_some() && json.get("textures").is_some() {
+                        model_files.push(file.clone());
+                    }
                 }
-            };
-
-            if json.get("model").is_some() && json.get("textures").is_some() {
-                model_files.push(file.to_path_buf());
+                Err(e) => {
+                    log::warn!("解析JSON文件'{}'失败: {}", file.display(), e);
+                }
             }
         }
     }
-    Ok(model_files,)
+
+    Ok(model_files)
 }
 fn build_character_data(
     figure_dir: &Path,
@@ -290,25 +309,29 @@ fn build_character_data(
                 }
             }
 
-            let costume_name = file
-                .file_stem()
-                .and_then(|s| s.to_str())
-                .unwrap_or("jsonl")
-                .to_string();
+            // 使用与json文件相同的逻辑来提取角色名称和路径
+            let (costume_name, character_name) = match get_names_from_path(file) {
+                Ok(v) => v,
+                Err(e) => {
+                    log::warn!("跳过无效jsonl模型 '{}': {}", file.display(), e);
+                    continue;
+                }
+            };
 
-            let character_name = file
-                .parent()
-                .and_then(|p| p.strip_prefix(figure_dir).ok())
-                .and_then(|p| p.to_str())
-                .unwrap_or("jsonl角色")
-                .to_string();
+            let character_path = match get_character_path(file) {
+                Ok(v) => v,
+                Err(e) => {
+                    log::warn!("跳过无效jsonl模型 '{}': {}", file.display(), e);
+                    continue;
+                }
+            };
 
             let character_info = character_data
                 .entry(character_name.clone())
                 .or_insert_with(|| {
                     serde_json::json!({
                         "name": character_name,
-                        "path": character_name,
+                        "path": character_path,
                         "costumes": []
                     })
                 });
@@ -389,48 +412,48 @@ fn build_character_data(
 
 
 fn get_names_from_path(path: &Path,) -> Result<(String, String,), String,> {
-    let mut components = path.components().rev();
-    components.next();
-    let costume_name = components
-        .next()
-        .and_then(|c| c.as_os_str().to_str().map(|s| s.to_string(),),)
-        .ok_or_else(|| format!("路径'{}'中未找到服装名称", path.display()),)?;
-    let character_name = components
-        .next()
-        .and_then(|c| c.as_os_str().to_str().map(|s| s.to_string(),),)
-        .ok_or_else(|| format!("路径'{}'中未找到角色名称", path.display()),)?;
-    Ok((costume_name, character_name,),)
+    let parts: Vec<_,> = path
+        .components()
+        .filter_map(|c| c.as_os_str().to_str(),)
+        .collect();
+
+    if parts.len() < 2 {
+        return Err(format!("路径'{}'中未找到足够的路径组件", path.display()),);
+    }
+
+    let costume = parts[parts.len() - 2].to_string();
+
+    let character = parts
+        .get(parts.len().saturating_sub(3,),)
+        .filter(|&&s| s != "figure",)
+        .map(|&s| s.to_string(),)
+        .unwrap_or_else(|| costume.clone(),);
+
+    Ok((costume, character,),)
 }
 
 fn get_character_path(path: &Path,) -> Result<String, String,> {
-    let mut components = path.components().rev();
+    let parts: Vec<_,> = path
+        .components()
+        .filter_map(|c| c.as_os_str().to_str(),)
+        .collect();
 
-    components.next();
-    components.next();
-
-    let mut path_components = Vec::new();
-    for component in components {
-        if component.as_os_str() == "figure" {
-            break;
-        }
-        path_components.push(component,);
+    if parts.len() < 2 {
+        return Err(format!("路径'{}'中未找到足够的路径组件", path.display()),);
     }
 
-    if path_components.is_empty() {
-        return Err(format!(
-            "路径'{}'中未找到有效的figure目录结构",
-            path.display()
-        ),);
-    }
+    let costume = parts[parts.len() - 2].to_string();
 
-    path_components.reverse();
-
-    let character_path = path_components
+    let figure_idx = parts[..parts.len() - 2]
         .iter()
-        .map(|c| c.as_os_str().to_str().unwrap(),)
-        .collect::<PathBuf>()
-        .to_string_lossy()
-        .replace('\\', "/",);
+        .rposition(|&p| p == "figure",)
+        .map(|i| i + 1,)
+        .unwrap_or(0,);
 
-    Ok(character_path,)
+    let char_parts = &parts[figure_idx..parts.len() - 2];
+    if char_parts.is_empty() {
+        return Ok(costume,);
+    }
+
+    Ok(char_parts.join("/",),)
 }

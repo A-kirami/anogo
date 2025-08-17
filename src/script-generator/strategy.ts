@@ -41,8 +41,16 @@ export const statementStrategy = [
         if (fullPath) {
           const [figureID, costumeName] = fullPath.split('/')
           const character = state.figureRecord[figureID]
-          const costume = character?.costumes?.find(c => c.name === costumeName)
-            ?? getDefaultCostume(character?.costumes)
+
+          // 优先查找指定的服装
+          let costume = costumeName
+            ? character?.costumes?.find(c => c.name === costumeName)
+            : undefined
+
+          // 如果没有找到指定服装，使用默认服装策略
+          if (!costume) {
+            costume = getDefaultCostume(character?.costumes)
+          }
 
           if (costume) {
             const figureFile = costume.path
@@ -53,7 +61,7 @@ export const statementStrategy = [
             const figureExpression = getFigureAction(costume.expressions ?? [], figureAction)
 
             const argsMap = {
-              id: figureID,
+              id: figureID?.split('/').pop(),
               transform: settings.figureDefaultTransform || undefined,
               next: '',
               motion: figureMotion,
@@ -69,7 +77,7 @@ export const statementStrategy = [
             result.push(changeFigureStmt)
 
             if (settings.dialogueAssociateFigure) {
-              dialogueArray.push(`-figureId=${figureID}`)
+              dialogueArray.push(`-id -figureId=${figureID}`)
             }
           }
         }
@@ -81,8 +89,11 @@ export const statementStrategy = [
   },
 ] as StrategyObject[]
 
-/** 根据名字在 figureLink 中查找路径，如 "千早爱音/live_event_297_sr" */
-function getFigureID(figureRecord: FigureRecord, figureLink: FigureLink, name: string): string | undefined {
+function getFigureID(
+  figureRecord: FigureRecord,
+  figureLink: FigureLink,
+  name: string,
+): string | undefined {
   for (const figureID of Object.keys(figureRecord)) {
     const costumes = figureRecord[figureID].costumes
     if (!costumes) {
@@ -93,7 +104,8 @@ function getFigureID(figureRecord: FigureRecord, figureLink: FigureLink, name: s
       const pathKey = `${figureID}/${costume.name}`
       const aliasList = figureLink[pathKey] || []
       if (aliasList.includes(name)) {
-        return pathKey
+        // 返回完整的路径信息，包含服装名称
+        return `${figureID}/${costume.name}`
       }
     }
   }
@@ -110,9 +122,15 @@ function getDefaultCostume(costumes?: Costume[]): Costume | undefined {
 }
 
 /** 动作映射 */
-function findAction(actionLink: ActionLink, key: string): string | undefined {
+function findAction(actionLink: ActionLink, key: string, figureID?: string): string | undefined {
   const item = actionLink.find(obj => obj.key === key)
-  return item?.value
+  if (!item?.value) {
+    return undefined
+  }
+  if (figureID && item.value.includes('{name}')) {
+    return item.value.replaceAll('{name}', figureID)
+  }
+  return item.value
 }
 
 /** 根据关键字过滤动作或表情 */

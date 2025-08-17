@@ -4,8 +4,6 @@ import naturalCompare from 'natural-compare-lite'
 import { OverlayScrollbarsComponent } from 'overlayscrollbars-vue'
 import { ref, computed, watch, nextTick } from 'vue'
 
-import { useStateStore } from '~/stores/state.ts'
-
 const open = defineModel<boolean>('open')
 
 const state = useStateStore()
