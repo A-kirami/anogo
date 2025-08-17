@@ -95,7 +95,7 @@ function getFigureID(
   name: string,
 ): string | undefined {
   for (const figureID of Object.keys(figureRecord)) {
-    const costumes = figureRecord[figureID].costumes
+    const { costumes } = figureRecord[figureID]
     if (!costumes) {
       continue
     }

@@ -115,21 +115,20 @@ pub fn analyze_figure(path: String,) -> Result<Map<String, Value,>, String,> {
 
 // 实现对jsonl拼好模的支持
 // 嗯，jsonl也可以是json
-fn get_json_files(dir: &Path,) -> Result<Vec<PathBuf,>, String,> {
+fn get_json_files(dir: &Path) -> Result<Vec<PathBuf>, String> {
     use std::collections::HashSet;
 
     let pattern = format!("{}/**/*", dir.display());
-    let mut files_to_return = Vec::new(); // 最终要返回的文件列表
+    let mut files_to_return = Vec::new(); // 最终返回文件列表
     let mut skip_dirs: HashSet<PathBuf> = HashSet::new();
 
+    // 阶段1：先记录所有包含 .jsonl 的目录（这些目录及其子目录的 .json 都要跳过）
     for entry in glob(&pattern).map_err(|e| format!("处理glob模式'{}'失败: {}", pattern, e))? {
         match entry {
             Ok(path) => {
-                if path.is_dir() {
-                    continue;
-                }
-                if path.extension().map(|ext| ext == "jsonl").unwrap_or(false) {
-                    let parent_path = path.parent().unwrap().to_path_buf();
+                if path.is_file() && path.extension().map(|ext| ext == "jsonl").unwrap_or(false) {
+                    // ⚠️ 安全获取父目录；若无父目录（几乎不可能，但做好兜底），回退为传入的 dir
+                    let parent_path = path.parent().map(|p| p.to_path_buf()).unwrap_or_else(|| dir.to_path_buf());
                     skip_dirs.insert(parent_path);
                 }
             }
@@ -143,6 +142,7 @@ fn get_json_files(dir: &Path,) -> Result<Vec<PathBuf,>, String,> {
         }
     }
 
+    // 阶段2：收集文件（含 .jsonl；若在 skip_dirs 下则跳过 .json）
     for entry in glob(&pattern).map_err(|e| format!("处理glob模式'{}'失败: {}", pattern, e))? {
         match entry {
             Ok(path) => {
@@ -150,30 +150,28 @@ fn get_json_files(dir: &Path,) -> Result<Vec<PathBuf,>, String,> {
                     continue;
                 }
 
-                let is_json = path.extension().map(|ext| ext == "json").unwrap_or(false);
-                let is_jsonl = path.extension().map(|ext| ext == "jsonl").unwrap_or(false);
-
-                if !is_json && !is_jsonl {
+                let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
+                if ext != "json" && ext != "jsonl" {
                     continue;
                 }
 
                 // .exp.json 忽略
-                if path
+                let is_exp_json = path
                     .file_name()
                     .and_then(|f| f.to_str())
                     .map(|name| name.ends_with(".exp.json"))
-                    .unwrap_or(false)
-                {
+                    .unwrap_or(false);
+                if is_exp_json {
                     continue;
                 }
 
-                // 如果是 jsonl 文件，直接添加 (因为它父目录已在阶段1处理过)
-                if is_jsonl {
+                if ext == "jsonl" {
+                    // ✅ jsonl 一律保留
                     files_to_return.push(path);
                     continue;
                 }
 
-                // 对于 .json 文件，检查是否在跳过目录或其子目录下
+                // ext == "json" 的情况：若在 skip_dirs（含 .jsonl 的目录）之下，则跳过
                 let mut should_skip_json = false;
                 for skip_dir in &skip_dirs {
                     if path.starts_with(skip_dir) {
@@ -185,7 +183,6 @@ fn get_json_files(dir: &Path,) -> Result<Vec<PathBuf,>, String,> {
                     continue;
                 }
 
-                // 如果是普通的 .json 文件且未被跳过，则添加
                 files_to_return.push(path);
             }
             Err(e) => {
@@ -202,6 +199,7 @@ fn get_json_files(dir: &Path,) -> Result<Vec<PathBuf,>, String,> {
 }
 
 fn filter_model_files(files: &[PathBuf]) -> Result<Vec<PathBuf>, String> {
+    use serde_json::Value;
     const MODEL_SUFFIXES: &[&str] = &["model.json", "model3.json"];
 
     let mut model_files: Vec<PathBuf> = Vec::new();
@@ -215,10 +213,16 @@ fn filter_model_files(files: &[PathBuf]) -> Result<Vec<PathBuf>, String> {
             }
         };
 
-        let is_jsonl = file.extension().map(|ext| ext == "jsonl").unwrap_or(false);
-        let is_candidate_name = MODEL_SUFFIXES.iter().any(|s| fname.ends_with(s));
-        // 普通 json 要匹配文件名；jsonl 直接尝试解析
-        if !is_jsonl && !is_candidate_name {
+        let is_jsonl = file.extension().map(|ext| ext.eq_ignore_ascii_case("jsonl")).unwrap_or(false);
+
+        if is_jsonl {
+            // 直接接受 .jsonl，不再读文件逐行解析
+            model_files.push(file.clone());
+            continue 'outer;
+        }
+
+        // 普通 json：仍按后缀过滤
+        if !MODEL_SUFFIXES.iter().any(|s| fname.ends_with(s)) {
             continue;
         }
 
@@ -230,34 +234,14 @@ fn filter_model_files(files: &[PathBuf]) -> Result<Vec<PathBuf>, String> {
             }
         };
 
-        if is_jsonl {
-            // 逐行检查 jsonl
-            for line in content.lines() {
-                match serde_json::from_str::<Value>(line) {
-                    Ok(json) => {
-                        if json.get("model").is_some()
-                            || (json.get("motions").is_some() && json.get("expressions").is_some())
-                        {
-                            model_files.push(file.clone());
-                            continue 'outer; // 这份文件已确认，处理下一个
-                        }
-                    }
-                    Err(e) => {
-                        log::warn!("解析JSONL文件'{}'中的行失败: {}", file.display(), e);
-                    }
+        match serde_json::from_str::<Value>(&content) {
+            Ok(json) => {
+                if json.get("model").is_some() && json.get("textures").is_some() {
+                    model_files.push(file.clone());
                 }
             }
-        } else {
-            // 普通 json
-            match serde_json::from_str::<Value>(&content) {
-                Ok(json) => {
-                    if json.get("model").is_some() && json.get("textures").is_some() {
-                        model_files.push(file.clone());
-                    }
-                }
-                Err(e) => {
-                    log::warn!("解析JSON文件'{}'失败: {}", file.display(), e);
-                }
+            Err(e) => {
+                log::warn!("解析JSON文件'{}'失败: {}", file.display(), e);
             }
         }
     }

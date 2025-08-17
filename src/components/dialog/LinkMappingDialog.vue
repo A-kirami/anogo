@@ -137,7 +137,10 @@ watch([searchQuery, prioritizeLinked], async () => {
                 >
                   <div class="flex flex-wrap items-baseline gap-2 overflow-hidden">
                     <span class="text-lg text-primary/80 font-semibold">{{ id }}</span>
-                    <span class="truncate text-sm text-muted-foreground" style="direction: rtl;">
+                    <span
+                      class="truncate text-sm text-muted-foreground"
+                      style=" overflow: hidden;text-overflow: ellipsis; text-align: right; white-space: nowrap;"
+                    >
                       {{ path }}
                       <span v-if="path.endsWith('.jsonl')" class="ml-2 text-pink-500">(聚合模型)</span>
                     </span>
