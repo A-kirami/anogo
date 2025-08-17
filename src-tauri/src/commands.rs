@@ -238,13 +238,8 @@ fn filter_model_files(files: &[PathBuf],) -> Result<Vec<PathBuf,>, String,> {
                 }
             };
 
-            if json.get("model",).is_some()
-                && json.get("physics",).is_some()
-                && json.get("textures",).is_some()
-                && json.get("motions",).is_some()
-                && json.get("expressions",).is_some()
-            {
-                model_files.push(file.to_path_buf(),);
+            if json.get("model").is_some() && json.get("textures").is_some() {
+                model_files.push(file.to_path_buf());
             }
         }
     }

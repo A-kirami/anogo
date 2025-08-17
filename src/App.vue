@@ -1,9 +1,6 @@
 <script setup lang="ts">
-import { relaunch } from '@tauri-apps/plugin-process'
-import { check } from '@tauri-apps/plugin-updater'
-import { storeToRefs } from 'pinia'
 
-import { isRelease } from '~build/meta'
+import { storeToRefs } from 'pinia'
 
 const settings = useSettingsStore()
 
@@ -19,17 +16,17 @@ provide('themeMode', themeMode)
 onMounted(async () => {
   await logger.attachConsole()
 
-  if (isRelease) {
-    try {
-      const update = await check()
-      if (update) {
-        await update.downloadAndInstall()
-        await relaunch()
-      }
-    } catch (error) {
-      void logger.error(`检查更新失败: ${error as string}`)
-    }
-  }
+  // if (isRelease) {
+  //   try {
+  //     const update = await check()
+  //     if (update) {
+  //       await update.downloadAndInstall()
+  //       await relaunch()
+  //     }
+  //   } catch (error) {
+  //     void logger.error(`检查更新失败: ${error as string}`)
+  //   }
+  // }
 })
 </script>
 
