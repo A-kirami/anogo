@@ -163,7 +163,7 @@ pub fn validate_model_file(file: &PathBuf,) -> bool {
     let model: Value = match serde_json::from_str(&content,) {
         Ok(model,) => model,
         Err(e,) => {
-            log::warn!("解析模型文件'{}'失败: {}", file.display(), e);
+            log::warn!("反序列化模型文件'{}'失败: {}", file.display(), e);
             return false;
         }
     };
@@ -225,8 +225,20 @@ fn build_character_data(
         let extension = file.extension().and_then(|e| e.to_str(),).unwrap_or("",);
 
         let (motions, expressions,) = match extension {
-            "jsonl" => parse_jsonl_model(file,)?,
-            _ => parse_json_model(file,)?,
+            "jsonl" => match parse_jsonl_model(file,) {
+                Ok(result,) => result,
+                Err(e,) => {
+                    log::warn!("解析聚合模型文件失败: {}",  e);
+                    continue;
+                }
+            },
+            _ => match parse_json_model(file,) {
+                Ok(result,) => result,
+                Err(e,) => {
+                    log::warn!("解析模型文件失败: {}", e);
+                    continue;
+                }
+            },
         };
 
         let (costume_name, character_name,) = get_names_from_path(file,)?;
@@ -280,7 +292,7 @@ fn parse_json_model(file: &Path,) -> Result<(Vec<String,>, Vec<String,>,), Strin
         .map_err(|e| format!("读取模型文件'{}'失败: {}", file.display(), e),)?;
 
     let model: Value = serde_json::from_str(&content,)
-        .map_err(|e| format!("解析模型文件'{}'失败: {}", file.display(), e),)?;
+        .map_err(|e| format!("反序列化模型文件'{}'失败: {}", file.display(), e),)?;
 
     Ok(extract_model_actions(&model,),)
 }
