@@ -49,7 +49,11 @@ const activeTab = $ref<'figure' | 'action'>('figure')
                 <div class="flex flex-col items-baseline gap-2 overflow-hidden">
                   <div class="space-x-2">
                     <span class="text-lg text-primary/80 font-semibold">{{ id }}</span>
-                    <span v-if="isComposite" class="border border-primary/80 rounded-full bg-primary/12 px-2 py-0.5 text-xs text-primary">聚合模型</span>
+                    <span
+                      v-if="isComposite"
+                      class="border border-primary/80 rounded-full bg-primary/12 px-2 py-0.5 text-xs text-primary"
+                      aria-label="聚合模型"
+                    >聚合模型</span>
                   </div>
                   <span class="truncate text-sm text-muted-foreground" style="direction: rtl;">{{ path }}</span>
                 </div>

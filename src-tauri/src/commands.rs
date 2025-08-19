@@ -115,8 +115,8 @@ pub fn analyze_figure(path: String,) -> Result<Map<String, Value,>, String,> {
 const MODEL_SUFFIXES: &[&str] = &["model.json", "model3.json",];
 
 fn find_model_files(dir: &Path,) -> Result<Vec<PathBuf,>, String,> {
-    let json_pattern = format!("{}/**/**/*.json", dir.display());
-    let jsonl_pattern = format!("{}/**/**/*.jsonl", dir.display());
+    let json_pattern = format!("{}/**/*.json", dir.display());
+    let jsonl_pattern = format!("{}/**/*.jsonl", dir.display());
 
     let mut files = Vec::new();
 
