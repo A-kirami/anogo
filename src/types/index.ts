@@ -9,6 +9,7 @@ export interface FigureData {
   name: string
   path: string
   costumes: Costume[]
+  is_composite: boolean
 }
 
 export interface Costume {

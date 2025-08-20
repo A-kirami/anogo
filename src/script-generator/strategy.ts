@@ -1,4 +1,9 @@
-import type { SceneStatement, BackgroundStatement, NarrationStatement, DialogueStatement } from './type'
+import type {
+  SceneStatement,
+  BackgroundStatement,
+  NarrationStatement,
+  DialogueStatement,
+} from './type'
 
 interface StrategyObject {
   keys: string[]
@@ -22,12 +27,14 @@ export const statementStrategy = [
       const result: string[] = []
       const { 角色: figure, 动作: action, 对话: dialogue } = stmt
       const dialogueArray = [`${figure}:`]
+
       if (settings.removeTrailingPeriodInDialogue) {
         const newDialogue = dialogue.replace(/。$/, '')
         dialogueArray.push(newDialogue)
       } else {
         dialogueArray.push(dialogue)
       }
+
       if (state.figureRecord) {
         const figureID = getFigureID(state.figureRecord, state.figureLink, figure)
         if (figureID) {
@@ -72,12 +79,8 @@ function getFigureID(figureRecord: FigureRecord, figureLink: FigureLink, name: s
 }
 
 function getDefaultCostume(costumes: Costume[]): Costume {
-  for (const costume of costumes) {
-    if (costume.name.includes('casual')) {
-      return costume
-    }
-  }
-  return randomChoice(costumes)
+  const preferred = costumes.find(c => c.name.includes('casual'))
+  return preferred || randomChoice(costumes)
 }
 
 function findAction(actionLink: ActionLink, key: string, figureID?: string): string | undefined {
@@ -85,11 +88,9 @@ function findAction(actionLink: ActionLink, key: string, figureID?: string): str
   if (!item?.value) {
     return undefined
   }
-
   if (figureID && item.value.includes('{name}')) {
     return item.value.replaceAll('{name}', figureID)
   }
-
   return item.value
 }
 

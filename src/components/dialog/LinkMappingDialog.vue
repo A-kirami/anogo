@@ -8,11 +8,11 @@ let open = defineModel<boolean>('open')
 const state = useStateStore()
 
 const gameFigures = $computed(() => {
-  const result: { id: string, path: string }[] = []
+  const result: { id: string, path: string, isComposite: boolean }[] = []
   if (state.figureRecord) {
     for (const key of Object.keys(state.figureRecord)) {
       const figureData = state.figureRecord[key]
-      result.push({ id: key, path: figureData.path })
+      result.push({ id: key, path: figureData.path, isComposite: figureData.is_composite })
     }
   }
   return result.sort((a, b) => naturalCompare(a.path, b.path))
@@ -45,9 +45,16 @@ const activeTab = $ref<'figure' | 'action'>('figure')
         <TabsContent value="figure" class="flex overflow-hidden" :class="{'mt-0': activeTab !== 'figure'}">
           <OverlayScrollbarsComponent defer class="px-2 py-1">
             <div class="flex flex-col gap-2">
-              <div v-for="{id, path} in gameFigures" :key="id" class="space-y-2">
-                <div class="flex flex-wrap items-baseline gap-2 overflow-hidden">
-                  <span class="text-lg text-primary/80 font-semibold">{{ id }}</span>
+              <div v-for="{id, path, isComposite} in gameFigures" :key="id" class="space-y-2">
+                <div class="flex flex-col items-baseline gap-2 overflow-hidden">
+                  <div class="space-x-2">
+                    <span class="text-lg text-primary/80 font-semibold">{{ id }}</span>
+                    <span
+                      v-if="isComposite"
+                      class="border border-primary/80 rounded-full bg-primary/12 px-2 py-0.5 text-xs text-primary"
+                      aria-label="聚合模型"
+                    >聚合模型</span>
+                  </div>
                   <span class="truncate text-sm text-muted-foreground" style="direction: rtl;">{{ path }}</span>
                 </div>
                 <TagsInput v-model="state.figureLink[id]">
