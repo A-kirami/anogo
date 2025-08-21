@@ -3,4 +3,3 @@ imports_granularity = "Crate"
 reorder_impl_items = true
 group_imports = "StdExternalCrate"
 struct_lit_single_line = false
-trailing_comma = "Always"

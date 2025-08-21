@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { yaml as yamlHighlight } from '@codemirror/lang-yaml'
 import { linter, lintGutter } from '@codemirror/lint'
-import { githubLight, githubDark } from '@uiw/codemirror-theme-github'
+import { githubDark, githubLight } from '@uiw/codemirror-theme-github'
 import { OverlayScrollbarsComponent } from 'overlayscrollbars-vue'
 import { Codemirror } from 'vue-codemirror'
 import YAML from 'yaml'

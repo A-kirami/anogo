@@ -37,6 +37,7 @@ declare global {
   const extendRef: typeof import('@vueuse/core')['extendRef']
   const getCurrentInstance: typeof import('vue')['getCurrentInstance']
   const getCurrentScope: typeof import('vue')['getCurrentScope']
+  const getCurrentWatcher: typeof import('vue')['getCurrentWatcher']
   const getSubmitFn: typeof import('./utils/form')['getSubmitFn']
   const getVersion: typeof import('./utils/metadata')['getVersion']
   const h: typeof import('vue')['h']
@@ -48,6 +49,7 @@ declare global {
   const isReactive: typeof import('vue')['isReactive']
   const isReadonly: typeof import('vue')['isReadonly']
   const isRef: typeof import('vue')['isRef']
+  const isShallow: typeof import('vue')['isShallow']
   const logger: typeof import('@tauri-apps/plugin-log')
   const makeDestructurable: typeof import('@vueuse/core')['makeDestructurable']
   const markRaw: typeof import('vue')['markRaw']
@@ -258,6 +260,7 @@ declare global {
   const useThrottleFn: typeof import('@vueuse/core')['useThrottleFn']
   const useThrottledRefHistory: typeof import('@vueuse/core')['useThrottledRefHistory']
   const useTimeAgo: typeof import('@vueuse/core')['useTimeAgo']
+  const useTimeAgoIntl: typeof import('@vueuse/core')['useTimeAgoIntl']
   const useTimeout: typeof import('@vueuse/core')['useTimeout']
   const useTimeoutFn: typeof import('@vueuse/core')['useTimeoutFn']
   const useTimeoutPoll: typeof import('@vueuse/core')['useTimeoutPoll']
@@ -301,7 +304,7 @@ declare global {
 // for type re-export
 declare global {
   // @ts-ignore
-  export type { Component, Slot, Slots, ComponentPublicInstance, ComputedRef, DirectiveBinding, ExtractDefaultPropTypes, ExtractPropTypes, ExtractPublicPropTypes, InjectionKey, PropType, Ref, MaybeRef, MaybeRefOrGetter, VNode, WritableComputedRef } from 'vue'
+  export type { Component, Slot, Slots, ComponentPublicInstance, ComputedRef, DirectiveBinding, ExtractDefaultPropTypes, ExtractPropTypes, ExtractPublicPropTypes, InjectionKey, PropType, Ref, ShallowRef, MaybeRef, MaybeRefOrGetter, VNode, WritableComputedRef } from 'vue'
   import('vue')
   // @ts-ignore
   export type { GameInfo, GameRecord, FigureData, Costume, FigureRecord, FigureLink, ActionLink } from './types/index'
@@ -347,6 +350,7 @@ declare module 'vue' {
     readonly extendRef: UnwrapRef<typeof import('@vueuse/core')['extendRef']>
     readonly getCurrentInstance: UnwrapRef<typeof import('vue')['getCurrentInstance']>
     readonly getCurrentScope: UnwrapRef<typeof import('vue')['getCurrentScope']>
+    readonly getCurrentWatcher: UnwrapRef<typeof import('vue')['getCurrentWatcher']>
     readonly getSubmitFn: UnwrapRef<typeof import('./utils/form')['getSubmitFn']>
     readonly getVersion: UnwrapRef<typeof import('./utils/metadata')['getVersion']>
     readonly h: UnwrapRef<typeof import('vue')['h']>
@@ -358,6 +362,7 @@ declare module 'vue' {
     readonly isReactive: UnwrapRef<typeof import('vue')['isReactive']>
     readonly isReadonly: UnwrapRef<typeof import('vue')['isReadonly']>
     readonly isRef: UnwrapRef<typeof import('vue')['isRef']>
+    readonly isShallow: UnwrapRef<typeof import('vue')['isShallow']>
     readonly logger: UnwrapRef<typeof import('@tauri-apps/plugin-log')>
     readonly makeDestructurable: UnwrapRef<typeof import('@vueuse/core')['makeDestructurable']>
     readonly markRaw: UnwrapRef<typeof import('vue')['markRaw']>
@@ -568,6 +573,7 @@ declare module 'vue' {
     readonly useThrottleFn: UnwrapRef<typeof import('@vueuse/core')['useThrottleFn']>
     readonly useThrottledRefHistory: UnwrapRef<typeof import('@vueuse/core')['useThrottledRefHistory']>
     readonly useTimeAgo: UnwrapRef<typeof import('@vueuse/core')['useTimeAgo']>
+    readonly useTimeAgoIntl: UnwrapRef<typeof import('@vueuse/core')['useTimeAgoIntl']>
     readonly useTimeout: UnwrapRef<typeof import('@vueuse/core')['useTimeout']>
     readonly useTimeoutFn: UnwrapRef<typeof import('@vueuse/core')['useTimeoutFn']>
     readonly useTimeoutPoll: UnwrapRef<typeof import('@vueuse/core')['useTimeoutPoll']>

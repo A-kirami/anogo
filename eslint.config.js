@@ -20,10 +20,10 @@ export default tseslint.config(
   eslint.configs.recommended,
   tseslint.configs.recommended,
   tseslint.configs.stylistic,
-  eslintPluginUnicorn.configs['flat/recommended'],
+  eslintPluginUnicorn.configs.recommended,
   eslintPluginImportX.flatConfigs.recommended,
   eslintPluginImportX.flatConfigs.typescript,
-  stylistic.configs['recommended-flat'],
+  stylistic.configs.recommended,
   ...eslintPluginVue.configs['flat/recommended'],
   unocss,
   vueMacros,
@@ -73,7 +73,7 @@ export default tseslint.config(
       '@stylistic/dot-location': ['error', 'property'],
       '@stylistic/newline-per-chained-call': ['warn', { ignoreChainWithDepth: 3 }],
       '@typescript-eslint/no-unused-vars': [
-        'error',
+        'warn',
         {
           args: 'all',
           argsIgnorePattern: '^_',
@@ -97,13 +97,22 @@ export default tseslint.config(
         {
           'groups': ['builtin', 'external', 'internal', ['parent', 'sibling', 'index'], 'object', 'type'],
           'newlines-between': 'always',
-          'alphabetize': { order: 'asc', caseInsensitive: true },
+          'alphabetize': { order: 'asc', orderImportKind: 'asc', caseInsensitive: true },
+          'named': true,
         },
       ],
       'import-x/newline-after-import': 'warn',
+      'import-x/consistent-type-specifier-style': 'warn',
       'unicorn/prevent-abbreviations': 'off',
       'unicorn/consistent-function-scoping': 'off',
       'unicorn/numeric-separators-style': ['warn', { number: { groupLength: 4 } }],
+      'unicorn/prefer-add-event-listener': [
+        'error', {
+          excludedPackages: [
+            '@tauri-apps/api/core',
+          ],
+        },
+      ],
     },
   },
   {

@@ -3,7 +3,7 @@ import YAML from 'yaml'
 
 import { statementStrategy } from './strategy'
 
-import type { SceneStatement, SceneScript } from './type'
+import type { SceneScript, SceneStatement } from './type'
 
 function hasAllProperties(stmt: SceneStatement, props: string[]): boolean {
   return props.every(prop => prop in stmt)

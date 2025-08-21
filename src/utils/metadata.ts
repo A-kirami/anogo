@@ -1,6 +1,6 @@
 import { isCI, isPR } from '~build/ci'
 import { github, tag } from '~build/git'
-import { isBuild, isRelease, prNum, buildSha } from '~build/meta'
+import { buildSha, isBuild, isRelease, prNum } from '~build/meta'
 import { version } from '~build/package'
 
 interface Version {

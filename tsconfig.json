@@ -32,12 +32,12 @@
     },
     "types": [
       "vite/client",
-      "unplugin-vue-macros/macros-global",
+      "vue-macros/macros-global",
       "unplugin-info/client"
     ]
   },
   "vueCompilerOptions": {
-    "plugins": ["unplugin-vue-macros/volar"],
+    "plugins": ["vue-macros/volar"],
   },
   "include": [
     "src/**/*.ts",

@@ -18,7 +18,7 @@ const transformSchema = z.string().superRefine((val, ctx) => {
   try {
     const parsed = JSON.parse(val)
 
-    const shapeSchema = z.object({
+    const shapeSchema = z.strictObject({
       position: z.object({
         x: z.number().optional(),
         y: z.number().optional(),
@@ -46,7 +46,7 @@ const transformSchema = z.string().superRefine((val, ctx) => {
           .refine(v => v === 0 || v === 1, `${key} 只能是 0 或 1`)
           .optional()])),
 
-    }).strict('包含未知属性').partial()
+    }, '包含未知属性').partial()
 
     const result = shapeSchema.safeParse(parsed)
     if (!result.success) {
@@ -59,7 +59,7 @@ const transformSchema = z.string().superRefine((val, ctx) => {
     }
   } catch {
     ctx.addIssue({
-      code: z.ZodIssueCode.custom,
+      code: 'custom',
       message: '必须是有效的 JSON 格式字符串',
       path: [],
     })

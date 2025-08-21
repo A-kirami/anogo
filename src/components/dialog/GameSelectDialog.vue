@@ -46,7 +46,7 @@ async function selectGame() {
             <img :src="icon || '/webgal.webp'" alt="game icon" class="size-12 rounded">
             <div class="flex flex-col gap-1 overflow-hidden">
               <span class="text-lg font-semibold">{{ name }}</span>
-              <span class="shrink-0 truncate text-xs text-muted-foreground" style="direction: rtl;">{{ path }}</span>
+              <span class="dir-rtl shrink-0 truncate text-xs text-muted-foreground">{{ path }}</span>
             </div>
           </div>
         </div>

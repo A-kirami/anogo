@@ -1,6 +1,6 @@
+import { presetWind } from '@unocss/preset-wind3'
 import {
   defineConfig,
-  presetUno,
   presetAttributify,
   presetIcons,
   presetTypography,
@@ -12,7 +12,7 @@ import { presetShadcn } from 'unocss-preset-shadcn'
 
 export default defineConfig({
   presets: [
-    presetUno(),
+    presetWind(),
     presetAttributify(),
     presetIcons({
       scale: 1.2,
@@ -23,13 +23,18 @@ export default defineConfig({
     }),
     presetTypography(),
     presetAnimations(),
-    presetShadcn({
-      color: {
-        base: 'rose',
-        light: { primary: '350 99% 71%', ring: '350 99% 71%' },
-        dark: { primary: '349 93% 60%', ring: '349 93% 60%' },
+    presetShadcn(
+      {
+        color: {
+          base: 'rose',
+          light: { primary: '350 99% 71%', ring: '350 99% 71%' },
+          dark: { primary: '349 93% 60%', ring: '349 93% 60%' },
+        },
       },
-    }),
+      {
+        componentLibrary: 'reka',
+      },
+    ),
   ],
   transformers: [transformerDirectives(), transformerVariantGroup()],
   content: {

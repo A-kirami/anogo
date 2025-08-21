@@ -1,4 +1,4 @@
-import type { TypedSchema, GenericObject, SubmissionContext } from 'vee-validate'
+import type { GenericObject, SubmissionContext, TypedSchema } from 'vee-validate'
 
 // https://github.com/logaretm/vee-validate/issues/3521
 export function getSubmitFn<TValues extends GenericObject = GenericObject, TOutput = TValues>(

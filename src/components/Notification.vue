@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Notivue, NotivueSwipe, Notification } from 'notivue'
+import { Notification, Notivue, NotivueSwipe } from 'notivue'
 </script>
 
 <template>

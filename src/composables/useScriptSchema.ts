@@ -1,4 +1,4 @@
-import { sceneScriptSchema, getStrictSchema } from '~/script-generator/schema'
+import { getStrictSchema, sceneScriptSchema } from '~/script-generator/schema'
 
 export default function useScriptSchema() {
   const state = useStateStore()

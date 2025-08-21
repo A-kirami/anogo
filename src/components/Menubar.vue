@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { open } from '@tauri-apps/plugin-dialog'
-import { CircleSlash2, Folder, Settings, Link } from 'lucide-vue-next'
+import { CircleSlash2, Folder, Link, Settings } from 'lucide-vue-next'
 
 let openSelect = $ref(false)
 

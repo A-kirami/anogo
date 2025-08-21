@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Link2, ArrowRightLeft, X, Plus } from 'lucide-vue-next'
+import { ArrowRightLeft, Link2, Plus, X } from 'lucide-vue-next'
 import naturalCompare from 'natural-compare-lite'
 import { OverlayScrollbarsComponent } from 'overlayscrollbars-vue'
 
@@ -55,7 +55,7 @@ const activeTab = $ref<'figure' | 'action'>('figure')
                       aria-label="聚合模型"
                     >聚合模型</span>
                   </div>
-                  <span class="truncate text-sm text-muted-foreground" style="direction: rtl;">{{ path }}</span>
+                  <span class="dir-rtl truncate text-sm text-muted-foreground">{{ path }}</span>
                 </div>
                 <TagsInput v-model="state.figureLink[id]">
                   <TagsInputItem v-for="item in state.figureLink[id]" :key="item" :value="item">

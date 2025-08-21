@@ -1,8 +1,8 @@
 import type {
-  SceneStatement,
   BackgroundStatement,
-  NarrationStatement,
   DialogueStatement,
+  NarrationStatement,
+  SceneStatement,
 } from './type'
 
 interface StrategyObject {

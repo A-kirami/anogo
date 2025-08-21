@@ -9,9 +9,9 @@ import AutoImport from 'unplugin-auto-import/vite'
 import Info from 'unplugin-info/vite'
 import TurboConsole from 'unplugin-turbo-console/vite'
 import Components from 'unplugin-vue-components/vite'
-import VueMacros from 'unplugin-vue-macros/vite'
 import { defineConfig } from 'vite'
 import VueDevTools from 'vite-plugin-vue-devtools'
+import VueMacros from 'vue-macros/vite'
 
 import type { UserConfig } from 'vite'
 
