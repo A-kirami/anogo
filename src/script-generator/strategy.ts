@@ -9,7 +9,7 @@ import type {
 
 interface StrategyObject {
   keys: string[]
-  handle: (stmt: SceneStatement, state: ReturnType<typeof useStateStore>, settings: ReturnType<typeof useSettingsStore>) => string | Generator<string, void, unknown>
+  handle: (stmt: SceneStatement, state: ReturnType<typeof useStateStore>, settings: ReturnType<typeof useSettingsStore>) => string | Iterable<string>
 }
 
 export const statementStrategy = [
