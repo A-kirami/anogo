@@ -53,7 +53,7 @@ async function createSceneFile() {
         </DialogDescription>
       </DialogHeader>
       <OverlayScrollbarsComponent defer class="border rounded-lg px-2 py-1">
-        <div class="select-text whitespace-pre-wrap text-sm prose prose-truegray">
+        <div class="select-text whitespace-pre-wrap text-sm prose prose-truegray dark:prose-invert">
           {{ state.scriptCode }}
         </div>
       </OverlayScrollbarsComponent>
