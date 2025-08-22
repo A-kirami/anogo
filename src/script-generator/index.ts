@@ -9,30 +9,22 @@ function hasAllProperties(stmt: SceneStatement, props: string[]): boolean {
   return props.every(prop => prop in stmt)
 }
 
-function processSceneScript(script: SceneScript): (string | string[])[] {
-  const results: (string | string[])[] = []
-
-  for (const statement of script) {
-    let processed = false
-
-    for (const strategy of statementStrategy) {
-      if (hasAllProperties(statement, strategy.keys)) {
-        results.push(strategy.handle(statement))
-        processed = true
-        break
-      }
-    }
-
-    if (!processed) {
+function processSceneScript(script: SceneScript): string[] {
+  const state = useStateStore()
+  const settings = useSettingsStore()
+  return script.flatMap((statement) => {
+    const strategy = statementStrategy.find(s => hasAllProperties(statement, s.keys))
+    if (!strategy) {
       void logger.error(`未知类型的语句: \n${YAML.stringify(statement)}`)
+      return []
     }
-  }
-
-  return results
+    const result = strategy.handle(statement, state, settings)
+    return typeof result === 'string' ? result : [...result]
+  })
 }
 
 export function generateScript(sceneScript: SceneScript): string {
   const scriptsStatements = processSceneScript(sceneScript)
   const separator = `;${getEOL()}`
-  return scriptsStatements.flat().join(separator) + separator
+  return scriptsStatements.join(separator) + separator
 }
