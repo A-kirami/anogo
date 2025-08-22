@@ -1,4 +1,5 @@
 use tauri::{Manager, WebviewUrl, WebviewWindowBuilder};
+#[cfg(target_os = "windows")]
 use tauri_plugin_prevent_default::PlatformOptions;
 
 mod commands;
@@ -41,6 +42,15 @@ pub fn run() {
             .plugin(tauri_plugin_updater::Builder::new().build());
     }
 
+    let prevent_default_plugin = tauri_plugin_prevent_default::Builder::new()
+        .with_flags(tauri_plugin_prevent_default::Flags::debug());
+
+    #[cfg(target_os = "windows")]
+    let prevent_default_plugin = prevent_default_plugin.platform(PlatformOptions {
+        general_autofill: false,
+        password_autosave: false,
+    });
+
     builder
         .plugin(tauri_plugin_dialog::init())
         .plugin(
@@ -57,15 +67,7 @@ pub fn run() {
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_opener::init())
-        .plugin(
-            tauri_plugin_prevent_default::Builder::new()
-                .with_flags(tauri_plugin_prevent_default::Flags::debug())
-                .platform(PlatformOptions {
-                    general_autofill: false,
-                    password_autosave: false,
-                })
-                .build(),
-        )
+        .plugin(prevent_default_plugin.build())
         .invoke_handler(tauri::generate_handler![
             commands::list_games,
             commands::write_file,
