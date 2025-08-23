@@ -149,7 +149,7 @@ onUpdated(resetForm)
                 <FormDescription>将对话关联到角色以模拟口型同步</FormDescription>
               </div>
               <FormControl>
-                <Switch :checked="value" aria-readonly @update:checked="handleChange" />
+                <Switch :model-value="value" aria-readonly @update:model-value="handleChange" />
               </FormControl>
             </FormItem>
           </FormField>
@@ -160,7 +160,7 @@ onUpdated(resetForm)
                 <FormDescription>对输入脚本的格式和内容进行严格检查</FormDescription>
               </div>
               <FormControl>
-                <Switch :checked="value" aria-readonly @update:checked="handleChange" />
+                <Switch :model-value="value" aria-readonly @update:model-value="handleChange" />
               </FormControl>
             </FormItem>
           </FormField>
@@ -171,7 +171,7 @@ onUpdated(resetForm)
                 <FormDescription>在生成脚本时移除对话末尾的句号</FormDescription>
               </div>
               <FormControl>
-                <Switch :checked="value" aria-readonly @update:checked="handleChange" />
+                <Switch :model-value="value" aria-readonly @update:model-value="handleChange" />
               </FormControl>
             </FormItem>
           </FormField>
