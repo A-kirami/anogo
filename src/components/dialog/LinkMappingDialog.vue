@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { ArrowRightLeft, Link2, Plus, X } from 'lucide-vue-next'
+import { ArrowRightLeft, Link2, Plus, Search, X } from 'lucide-vue-next'
 import naturalCompare from 'natural-compare-lite'
 import { OverlayScrollbarsComponent } from 'overlayscrollbars-vue'
 
 let open = defineModel<boolean>('open')
 
 const state = useStateStore()
+
+const activeTab = $ref<'figure' | 'action'>('figure')
 
 const gameFigures = $computed(() => {
   const result: { id: string, path: string, isComposite: boolean }[] = []
@@ -18,7 +20,15 @@ const gameFigures = $computed(() => {
   return result.sort((a, b) => naturalCompare(a.path, b.path))
 })
 
-const activeTab = $ref<'figure' | 'action'>('figure')
+const search = ref('')
+const searchDebounced = $(refDebounced(search, 250))
+
+const filteredGameFigures = $computed(() => {
+  return gameFigures.filter(({ id, path }) => {
+    const searchTerm = searchDebounced.toLowerCase()
+    return id.toLowerCase().includes(searchTerm) || path.toLowerCase().includes(searchTerm)
+  })
+})
 </script>
 
 <template>
@@ -42,10 +52,16 @@ const activeTab = $ref<'figure' | 'action'>('figure')
             动作
           </TabsTrigger>
         </TabsList>
-        <TabsContent value="figure" class="flex overflow-hidden" :class="{'mt-0': activeTab !== 'figure'}">
+        <TabsContent value="figure" class="flex flex-col overflow-hidden" :class="{'mt-0': activeTab !== 'figure'}">
+          <div class="relative mx-2 my-1 items-center">
+            <Input id="search" v-model="search" type="text" placeholder="查找立绘" class="pl-10" />
+            <span class="absolute start-0 inset-y-0 flex items-center justify-center px-2">
+              <Search class="size-6 text-muted-foreground" />
+            </span>
+          </div>
           <OverlayScrollbarsComponent defer class="px-2 py-1">
             <div class="flex flex-col gap-2">
-              <div v-for="{id, path, isComposite} in gameFigures" :key="id" class="space-y-2">
+              <div v-for="{id, path, isComposite} in filteredGameFigures" :key="id" class="space-y-2">
                 <div class="flex flex-col items-baseline gap-2 overflow-hidden">
                   <div class="space-x-2">
                     <span class="text-lg text-primary/80 font-semibold">{{ id }}</span>
