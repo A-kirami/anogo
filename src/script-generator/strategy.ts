@@ -1,4 +1,4 @@
-import { buildStatement, findAction, getDefaultCostume, getFigureAction, getFigureId } from './utils'
+import { buildStatement, findAction, getDefaultCostume, getFigureAction, getFigureExpression, getFigureId } from './utils'
 
 import type {
   BackgroundStatement,
@@ -33,8 +33,8 @@ export const statementStrategy = [
           const defaultCostume = getDefaultCostume(state.figureRecord[figureId].costumes)
           const figureFile = defaultCostume.path
           const figureAction = findAction(state.actionLink, action, figureId) || settings.figureDefaultAction || 'idle'
-          const figureMotion = getFigureAction(defaultCostume.motions, figureAction)
-          const figureExpression = getFigureAction(defaultCostume.expressions, figureAction)
+          const figureMotion = getFigureAction(defaultCostume.motions, figureAction, true, figureId)
+          const figureExpression = getFigureExpression(defaultCostume.expressions, figureAction, figureId)
           const figureArgs = {
             id: figureId,
             transform: settings.figureDefaultTransform || undefined,
