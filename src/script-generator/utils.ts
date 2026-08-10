@@ -1,3 +1,10 @@
+import { randomChoice } from '../utils'
+
+export interface FigureActionScope {
+  currentFigureId: string
+  figureIds: readonly string[]
+}
+
 export function getFigureId(figureRecord: FigureRecord, figureLink: FigureLink, name: string): string | undefined {
   for (const id of Object.keys(figureRecord)) {
     const linkNames = figureLink[id] ?? []
@@ -24,10 +31,36 @@ export function findAction(actionLink: ActionLink, key: string, figureID?: strin
   return item.value
 }
 
-export function getFigureAction(motions: string[], action: string): string {
-  const filteredMotions = motions.filter(motion => motion.includes(action))
-  const finalMotions = filteredMotions.length > 0 ? filteredMotions : motions
-  return randomChoice(finalMotions)
+export function getFigureAction(actions: string[], action: string, allowFallback = true, scope?: FigureActionScope): string | undefined {
+  const scopedActions = getFigureActions(actions, scope)
+  return selectFigureAction(scopedActions, action, allowFallback)
+}
+
+export function getFigureExpression(expressions: string[], action: string, scope?: FigureActionScope): string | undefined {
+  const scopedExpressions = getFigureActions(expressions, scope)
+  return selectFigureAction(scopedExpressions, action, false) ?? selectFigureAction(scopedExpressions, 'default', false)
+}
+
+function getFigureActions(actions: string[], scope?: FigureActionScope): string[] {
+  if (!scope) {
+    return actions
+  }
+
+  const isScopedAction = (action: string) => scope.figureIds.some(figureId => action.includes(figureId))
+  if (!actions.some(action => isScopedAction(action))) {
+    return actions
+  }
+
+  return actions.filter(action => !isScopedAction(action) || action.includes(scope.currentFigureId))
+}
+
+function selectFigureAction(actions: string[], action: string, allowFallback: boolean): string | undefined {
+  const matchingActions = actions.filter(item => item.includes(action))
+  if (matchingActions.length > 0) {
+    return randomChoice(matchingActions)
+  }
+
+  return allowFallback && actions.length > 0 ? randomChoice(actions) : undefined
 }
 
 export function buildStatement(command: string = '', content: string = '', args: Record<string, unknown> = {}, isNext: boolean = false): string {
